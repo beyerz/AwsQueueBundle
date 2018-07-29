@@ -1,0 +1,21 @@
+imports:
+  - { resource: demo.yml }
+
+parameters:
+  beyerz_aws_queue.producer_service.class: Beyerz\AWSQueueBundle\Producer\ProducerService
+  beyerz_aws_queue.fabric.aws.class: Beyerz\AWSQueueBundle\Fabric\AwsFabric
+  beyerz_aws_queue.fabric.gearman.class: Beyerz\AWSQueueBundle\Fabric\GearmanFabric
+
+services:
+
+  beyerz_aws_queue.producer_service:
+    class: "%beyerz_aws_queue.producer_service.class%"
+    arguments: ["@beyerz_aws_queue.fabric.local","default_channel"]
+    public: false
+
+  beyerz_aws_queue.fabric.aws:
+    class: "%beyerz_aws_queue.fabric.aws.class%"
+    arguments: ["@aws.sqs","@aws.sns"]
+
+#  beyerz_aws_queue.fabric.local:
+#    class: "%beyerz_aws_queue.fabric.gearman.class%"

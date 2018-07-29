@@ -1,0 +1,15 @@
+{
+    "name": "beyerz/aws-queue-bundle",
+    "description": "Symfony bundle to connect AWS sns and sqs to create offline queue processing",
+    "type": "symfony-bundle",
+    "require": {
+        "aws/aws-sdk-php-symfony": "^2.0.0",
+        "symfony/symfony": "2.8.*"
+    },
+    "authors": [
+        {
+            "name": "Lance Bailey",
+            "email": "bailz777@gmail.com"
+        }
+    ]
+}

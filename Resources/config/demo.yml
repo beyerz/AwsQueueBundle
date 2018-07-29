@@ -1,0 +1,22 @@
+parameters:
+  beyerz_aws_queue.demo.producer.class: Beyerz\AWSQueueBundle\Demo\Producer
+  beyerz_aws_queue.demo.consumer.class: Beyerz\AWSQueueBundle\Demo\Consumer
+
+services:
+
+  beyerz_aws_queue.demo.producer.1:
+    class: "%beyerz_aws_queue.demo.producer.class%"
+    tags:
+      - {name: "beyerz_aws_queue.producer", channel: "demo"}
+
+  beyerz_aws_queue.demo.producer.2:
+    class: "%beyerz_aws_queue.demo.producer.class%"
+    tags:
+      - {name: "beyerz_aws_queue.producer"}
+
+  beyerz_aws_queue.demo.consumer:
+    class: "%beyerz_aws_queue.demo.consumer.class%"
+    tags:
+      - {name: "beyerz_aws_queue.consumer", channel: "my_test"}
+      - {name: "beyerz_aws_queue.subscriber", producer: "demo"}
+      - {name: "beyerz_aws_queue.subscriber", producer: "demo_producer_2"}
