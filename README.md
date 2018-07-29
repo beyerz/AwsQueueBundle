@@ -41,8 +41,8 @@ beyerz_aws_queue:
 Due to the way that Aws has defined the working tree, the aws-queue-bundle cannot automatically append your configs.<br>
 The result of this is that you will need to define the aws configuration yourself.
 
-##Documentation
-###Creating a Producer
+## Documentation
+### Creating a Producer
 
 Creating a producer that can be used in your system is really simple, here is some sample code to get you started
 You can also look at the demo folder in this bundle
@@ -90,4 +90,4 @@ You can now access your producer as you normally would through symfony container
 After running this producer, you can go to SQS service in your amazon account and see messages waiting in your queue.
 Pretty Awesome!!!
 
-###Creating a Consumer
+### Creating a Consumer
