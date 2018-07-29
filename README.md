@@ -74,10 +74,14 @@ Next, we need to define the producer as a service so that we can tag it and make
 
 _AcmeBundle/Resources/config/services.yml_
 ```YAML
-acme.my_awesome_producer:
-    class: Acme\AcmeBundle\Producers\MyAwesomeProducer
-    tags:
-      - {name: "beyerz_aws_queue.producer", channel: "demo"}
+parameters:
+    acme.my_awesome_producer.class: Acme\AcmeBundle\Producers\MyAwesomeProducer
+    
+services:
+    acme.my_awesome_producer:
+        class: "%acme.my_awesome_producer.class%"
+        tags:
+            - {name: "beyerz_aws_queue.producer", channel: "demo"}
 ```
 
 You can now access your producer as you normally would through symfony container
