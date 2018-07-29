@@ -81,7 +81,7 @@ services:
     acme.my_awesome_producer:
         class: "%acme.my_awesome_producer.class%"
         tags:
-            - {name: "beyerz_aws_queue.producer", channel: "demo"}
+            - {name: "beyerz_aws_queue.producer", channel: "awesome_producer"}
 ```
 
 You can now access your producer as you normally would through symfony container
@@ -91,7 +91,59 @@ You can now access your producer as you normally would through symfony container
     $myMessage = "My Awesome Message";
     $myAwesomeProducer->publish($message);
 ```
-After running this producer, you can go to SQS service in your amazon account and see messages waiting in your queue.
-Pretty Awesome!!!
+After running this producer, you can go to SNS service in your amazon account and see a new topic has been created for you.
+You will not yet have queues in your SQS as we have not yet created any consumers
 
 ### Creating a Consumer
+Consumer are a little more complex than producers, but the basic concept to understand is that your consumer class receives the message from the queue for you to process.
+
+_AcmeBundle/Consumers/MyAwesomeConsumer.php_
+```php
+<?php
+
+namespace Acme\AcmeBundle\Consumers;
+
+
+use Beyerz\AWSQueueBundle\Interfaces\ConsumerInterface;
+
+class MyAwesomeConsumer implements ConsumerInterface
+{
+
+    public function consume($message)
+    {
+        //do something awesome with your message
+    }
+}
+
+```
+Consumers require some setup which is handled by this bundle and you dont really have to worry too much about it.
+We have provided both an interface and as long you have implemented it, the setup should go smoothly.
+Your consumer class gets "wrapped" in a special consumer service. This wrapper connects to the queue and passes the message to your consume function. This wrapper loads your consumer using service container, this means that you can create your service as you normally would, so you can even add dependecies to a constructor!
+
+Next, we need to define the consumer as a service so that we can tag it and make the AwsQueueBundle aware that it exists :)
+There are two tags that we are going to use.
+The first tag tells the bundle that this is a consumer and the defines the name of the SQS queue using the channel key
+The second tag tells the bundle which producer this consumer wants to subscribe to.
+If you want to subscribe this queue to more than one producer, just duplicate the tag and define the producer name accordingly
+
+_AcmeBundle/Resources/config/services.yml_
+```YAML
+parameters:
+    acme.my_awesome_consumer.class: Acme\AcmeBundle\Consumers\MyAwesomeConsumer
+    
+services:
+    acme.my_awesome_consumer:
+        class: "%acme.my_awesome_consumer.class%"
+        tags:
+            - {name: "beyerz_aws_queue.consumer", channel: "awesome_consumer"}
+            - {name: "beyerz_aws_queue.subscriber", producer: "awesome_producer"}
+```
+
+Now you can run your producer using cli
+```bash
+    php app/console beyerz:consumer awesome_consumer
+```
+
+Your consumer will keep running unless you specify a max message limit or something crashes.
+Its probably best to start your consumers using a task management system such as supervisor or even jenkins.
+If you have processes that you prefer to run at specific times and not continuosly you can also use crontab
