@@ -103,7 +103,7 @@ class AwsFabric extends AbstractFabric
 
                         if ( $result ) {
                             //remove message
-                            $this->sqs->deleteMessage(
+                            $this->getQueueService()->deleteMessage(
                                 [
                                     'QueueUrl'      => $this->queueUrl,
                                     'ReceiptHandle' => $message['ReceiptHandle'],
