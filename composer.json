@@ -1,15 +1,32 @@
 {
-    "name": "beyerz/aws-queue-bundle",
-    "description": "Symfony bundle to connect AWS sns and sqs to create offline queue processing",
-    "type": "symfony-bundle",
-    "require": {
-        "aws/aws-sdk-php-symfony": "^2.0.0",
-        "symfony/symfony": "2.8.*"
-    },
-    "authors": [
-        {
-            "name": "Lance Bailey",
-            "email": "bailz777@gmail.com"
-        }
-    ]
+  "name": "beyerz/aws-queue-bundle",
+  "description": "Symfony bundle to connect AWS sns and sqs to create offline queue processing",
+  "type": "symfony-bundle",
+  "authors": [
+    {
+      "name": "Lance Bailey",
+      "email": "bailz777@gmail.com"
+    }
+  ],
+  "keywords": [
+    "Symfony",
+    "Symfony2",
+    "Queue Management",
+    "AWS",
+    "Amazon Web services",
+    "Simple Queue Service",
+    "Simple Notification Service",
+    "SQS",
+    "SNS"
+  ],
+  "require": {
+    "php": ">=7.0",
+    "aws/aws-sdk-php-symfony": "^2.0.0",
+    "symfony/symfony": "2.8.*"
+  },
+  "autoload": {
+    "psr-4": {
+      "Beyerz\\AWSQueueBundle\\": ""
+    }
+  }
 }
