@@ -16,6 +16,7 @@ services:
   beyerz_aws_queue.fabric.aws:
     class: "%beyerz_aws_queue.fabric.aws.class%"
     arguments: ["@aws.sqs","@aws.sns"]
+    public: false
     calls:
       - [setContainer, ['@service_container']]
 

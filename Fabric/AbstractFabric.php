@@ -74,5 +74,5 @@ abstract class AbstractFabric
      */
     abstract public function publish($message, $channel, ArrayCollection $subscribers);
 
-    abstract public function consume($toProcess = true, $channel, ConsumerService $consumer);
+    abstract public function consume($channel, ConsumerService $consumer);
 }

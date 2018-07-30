@@ -66,54 +66,39 @@ class AwsFabric extends AbstractFabric
         );
     }
 
-    public function consume($toProcess = true, $channel, ConsumerService $consumer)
+    public function consume($channel, ConsumerService $consumer)
     {
         $this->setup($channel, new ArrayCollection([ $consumer ]));
         $queueUrl = $this->buildQueueUrl($consumer->getChannel());
-        $processed = 0;
-        while ($processed<$toProcess || $toProcess === true) {
-            $processed ++;
+        //get message
+        $sqsMessage = $this->getQueueService()->receiveMessage(
+            [
+                'AttributeNames'        => [ 'SentTimestamp' ],
+                'MaxNumberOfMessages'   => 1,
+                'MessageAttributeNames' => [ 'All' ],
+                'QueueUrl'              => $queueUrl,
+                'WaitTimeSeconds'       => 20, // for long polling
+            ]
+        );
+        if ( count($sqsMessage->get('Messages'))>0 ) {
+            foreach ($sqsMessage->get('Messages') as $message) {
+                $body = json_decode($message['Body'], true);
+                $msg = unserialize($body['Message']);
+                $data = [
+                    'msg'     => $msg,
+                    'channel' => $channel,
+                ];
+                $result = call_user_func([ $this->container->get($consumer->getConsumer()), 'consume' ], $data);
 
-            $pid = pcntl_fork();
-            if ( $pid == - 1 ) {
-                //error
-                var_dump("error");
-            } elseif ( $pid ) {
-                pcntl_waitpid($pid, $status);
-            } else {
-                //get message
-                $sqsMessage = $this->getQueueService()->receiveMessage(
-                    [
-                        'AttributeNames'        => [ 'SentTimestamp' ],
-                        'MaxNumberOfMessages'   => 1,
-                        'MessageAttributeNames' => [ 'All' ],
-                        'QueueUrl'              => $queueUrl,
-                        'WaitTimeSeconds'       => 20, // for long polling
-                    ]
-                );
-                if ( count($sqsMessage->get('Messages'))>0 ) {
-                    foreach ($sqsMessage->get('Messages') as $message) {
-                        $body = json_decode($message['Body'], true);
-                        $msg = unserialize($body['Message']);
-                        $data = [
-                            'msg'     => $msg,
-                            'channel' => $channel,
-                        ];
-                        $result = call_user_func([ $this->container->get($consumer->getConsumer()), 'consume' ], $data);
-
-                        if ( $result ) {
-                            //remove message
-                            $this->getQueueService()->deleteMessage(
-                                [
-                                    'QueueUrl'      => $queueUrl,
-                                    'ReceiptHandle' => $message['ReceiptHandle'],
-                                ]
-                            );
-                        } else {
-                        }
-                    }
+                if ( $result ) {
+                    //remove message
+                    $this->getQueueService()->deleteMessage(
+                        [
+                            'QueueUrl'      => $queueUrl,
+                            'ReceiptHandle' => $message['ReceiptHandle'],
+                        ]
+                    );
                 }
-                exit(0);
             }
         }
     }

@@ -34,7 +34,8 @@ class BeyerzAWSQueueExtension extends Extension
     {
         $awsFabricDefinition = $container->getDefinition('beyerz_aws_queue.fabric.aws');
         $awsFabricDefinition->addMethodCall('setAccount', [ $config[Configuration::KEY_AWS_ACCOUNT] ])
-            ->addMethodCall('setRegion', [ $config[Configuration::KEY_AWS_REGION] ]);
+            ->addMethodCall('setRegion', [ $config[Configuration::KEY_AWS_REGION] ])
+            ->setPublic(false);
     }
 
     private function prepareProducerService($config, ContainerBuilder $container)

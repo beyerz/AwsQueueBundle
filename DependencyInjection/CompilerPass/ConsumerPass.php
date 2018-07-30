@@ -72,6 +72,7 @@ class ConsumerPass implements CompilerPassInterface
         $consumerSubscriberTags = $consumerDefinition->getTag('beyerz_aws_queue.subscriber');
         $definition = new Definition(ConsumerService::class, [ new Reference($fabric), $channel ]);
         $definition->addMethodCall('setConsumer', [ $consumer ]);
+        $definition->addMethodCall('setContainer', [new Reference('service_container')]);
         $definition->addTag('beyerz_aws_queue.consumer_service');
         foreach ($consumerSubscriberTags as $consumerSubscriberTag) {
             $producerReference = new Reference(sprintf('beyerz_aws_queue.producer_service.%s', $consumerSubscriberTag['producer']));
