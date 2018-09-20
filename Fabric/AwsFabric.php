@@ -78,6 +78,7 @@ class AwsFabric extends AbstractFabric
                 'MessageAttributeNames' => [ 'All' ],
                 'QueueUrl'              => $queueUrl,
                 'WaitTimeSeconds'       => 20, // for long polling
+                'VisibilityTimeout'     => 3600, // for lon running processes
             ]
         );
         if ( count($sqsMessage->get('Messages'))>0 ) {
