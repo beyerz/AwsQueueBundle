@@ -26,7 +26,8 @@ class BeyerzTestProducerCommand extends ContainerAwareCommand
         $io->comment("Publishing to producer2: \"Producer 2 message\"");
         $producer2->publish("Producer 2 message");
         $io->success("Publish complete");
-        exit(0);
+
+        return 0;
     }
 
 }
