@@ -18,6 +18,7 @@ class Configuration implements ConfigurationInterface
     const KEY_AWS_ACCOUNT = 'account';
     const KEY_CHANNEL_PREFIX = 'channel_prefix';
     const KEY_RUN_LOCAL = 'run_local';
+    const KEY_ENABLE_FORKING = 'enable_forking';
     /**
      * {@inheritdoc}
      */
@@ -31,6 +32,7 @@ class Configuration implements ConfigurationInterface
             ->scalarNode(self::KEY_AWS_ACCOUNT)->isRequired()->end()
             ->scalarNode(self::KEY_CHANNEL_PREFIX)->defaultNull()->end()
             ->scalarNode(self::KEY_RUN_LOCAL)->defaultFalse()->end()
+            ->scalarNode(self::KEY_ENABLE_FORKING)->defaultTrue()->end()
             ->arrayNode('consumers')
                 ->prototype('array')
                     ->children()

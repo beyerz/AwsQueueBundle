@@ -17,6 +17,6 @@ services:
   beyerz_aws_queue.demo.consumer:
     class: "%beyerz_aws_queue.demo.consumer.class%"
     tags:
-      - {name: "beyerz_aws_queue.consumer", channel: "my_test"}
+      - {name: "beyerz_aws_queue.consumer", channel: "beyerz_demo"}
       - {name: "beyerz_aws_queue.subscriber", producer: "demo"}
       - {name: "beyerz_aws_queue.subscriber", producer: "demo_producer_2"}

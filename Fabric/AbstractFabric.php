@@ -67,12 +67,17 @@ abstract class AbstractFabric
     abstract public function setupQueueServices(string $channel, ArrayCollection $subscribers);
 
     /**
-     * @param                 $message
-     * @param                 $channel
+     * @param string          $message
+     * @param string          $channel
      * @param ArrayCollection $subscribers
      * @return mixed
      */
-    abstract public function publish($message, $channel, ArrayCollection $subscribers);
+    abstract public function publish(string $message, string $channel, ArrayCollection $subscribers);
 
-    abstract public function consume($channel, ConsumerService $consumer);
+    /**
+     * @param ConsumerService $consumer
+     * @param int             $messageCount
+     * @return int
+     */
+    abstract public function consume(ConsumerService $consumer, int $messageCount): int;
 }

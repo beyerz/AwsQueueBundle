@@ -9,6 +9,7 @@
 namespace Beyerz\AWSQueueBundle\Fabric;
 
 
+use Aws\Result;
 use Aws\Sns\Exception\SnsException;
 use Aws\Sqs\Exception\SqsException;
 use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
@@ -53,43 +54,73 @@ class AwsFabric extends AbstractFabric
         return $this;
     }
 
-    public function publish($message, $channel, ArrayCollection $subscribers)
+    /**
+     * @param string          $message
+     * @param                 $channel
+     * @param ArrayCollection $subscribers
+     * @return string
+     */
+    public function publish(string $message, string $channel, ArrayCollection $subscribers): string
     {
         $this->setup($channel, $subscribers);
         $topicArn = $this->buildTopicArn($channel);
 
-        return $this->getNotificationService()->publish(
+        $msg = [
+            'data'    => $message,
+            'channel' => $channel,
+        ];
+
+        /** @var Result $response */
+        $response = $this->getNotificationService()->publish(
             [
                 "TopicArn" => $topicArn,
-                "Message"  => $message,
+                "Message"  => serialize($msg),
             ]
         );
+
+        return $response->get('MessageId');
     }
 
-    public function consume($channel, ConsumerService $consumer)
+    /**
+     * @param ConsumerService $consumer
+     * @param int             $messageCount
+     * @return int
+     */
+    public function consume(ConsumerService $consumer, int $messageCount): int
     {
-        $this->setup($channel, new ArrayCollection([ $consumer ]));
         $queueUrl = $this->buildQueueUrl($consumer->getChannel());
         //get message
+        /** @var Result $sqsMessage */
         $sqsMessage = $this->getQueueService()->receiveMessage(
             [
                 'AttributeNames'        => [ 'SentTimestamp' ],
-                'MaxNumberOfMessages'   => 1,
+                'MaxNumberOfMessages'   => ($messageCount>=10 || $messageCount === - 1) ? 10 : $messageCount,
                 'MessageAttributeNames' => [ 'All' ],
                 'QueueUrl'              => $queueUrl,
                 'WaitTimeSeconds'       => 20, // for long polling
-                'VisibilityTimeout'     => 3600, // for lon running processes
+//                'VisibilityTimeout'     => 3600, // for lon running processes
             ]
         );
+        $consumed = 0;
         if ( count($sqsMessage->get('Messages'))>0 ) {
             foreach ($sqsMessage->get('Messages') as $message) {
                 $body = json_decode($message['Body'], true);
                 $msg = unserialize($body['Message']);
-                $data = [
-                    'msg'     => $msg,
+                if ( is_array($msg) ) {
+                    $data = $msg['data'];
+                    $channel = $msg['channel'];
+
+                } else {
+                    //BC For older messages that did not contain channel data
+                    $data = $msg;
+                    $channel = null;
+                }
+
+                $consumable = [
+                    'msg'     => $data,
                     'channel' => $channel,
                 ];
-                $result = call_user_func([ $this->container->get($consumer->getConsumer()), 'consume' ], $data);
+                $result = call_user_func([ $this->container->get($consumer->getConsumer()), 'consume' ], $consumable);
 
                 if ( $result ) {
                     //remove message
@@ -100,8 +131,11 @@ class AwsFabric extends AbstractFabric
                         ]
                     );
                 }
+                $consumed ++;
             }
         }
+
+        return $consumed;
     }
 
     /**

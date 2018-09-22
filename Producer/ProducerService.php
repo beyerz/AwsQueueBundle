@@ -44,9 +44,12 @@ class ProducerService
         $this->subscribers = new ArrayCollection();
     }
 
-    public function publish($message)
+    /**
+     * @param mixed $message
+     */
+    public function publish(string $message)
     {
-        $this->fabric->publish(serialize($message), $this->channel, $this->subscribers);
+        $this->fabric->publish($message, $this->channel, $this->subscribers);
     }
 
     public function addSubscriber(ConsumerService $consumer)

@@ -28,6 +28,7 @@ class BeyerzAWSQueueExtension extends Extension
         $this->prepareProducerService($config, $container);
         $container->setParameter('beyerz_aws_queue.channel_prefix', $config[Configuration::KEY_CHANNEL_PREFIX]);
         $container->setParameter('beyerz_aws_queue.is_local', $config[Configuration::KEY_RUN_LOCAL]);
+        $container->setParameter('beyerz_aws_queue.enable_forking', $config[Configuration::KEY_ENABLE_FORKING]);
     }
 
     private function prepareAwsFabric($config, ContainerBuilder $container)

@@ -27,7 +27,7 @@ class BeyerzConsumerCommand extends ContainerAwareCommand
         $name = $input->getArgument('name');
         /** @var ConsumerService $consumer */
         $consumer = $this->getContainer()->get(sprintf($consumerKey, $name));
-        $consumer->consume($input->getOption('messages'));
+        return $consumer->consume((int)$input->getOption('messages'));
     }
 
 }

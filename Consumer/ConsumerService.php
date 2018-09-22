@@ -79,6 +79,18 @@ class ConsumerService
     public function consume($toProcess)
     {
         foreach ($this->subscribedChannels as $subscribedChannel) {
+            $this->fabric->setup($subscribedChannel->getChannel(), new ArrayCollection([ $this ]));
+        }
+        if ( true === $this->container->getParameter('beyerz_aws_queue.enable_forking') ) {
+            $this->runForkedConsumer($toProcess);
+        } else {
+            $this->runSynchronousConsumer($toProcess);
+        }
+    }
+
+    private function runForkedConsumer($toProcess)
+    {
+        foreach ($this->subscribedChannels as $subscribedChannel) {
             $processed = 0;
             while ($processed<$toProcess || $toProcess === true) {
                 $processed ++;
@@ -95,6 +107,21 @@ class ConsumerService
                     exit(0);
                 }
             }
+        }
+    }
+
+    /**
+     * @param int|bool $toProcess
+     */
+    private function runSynchronousConsumer($toProcess): void
+    {
+        $processed = 0;
+        while ($processed<$toProcess || $toProcess === true) {
+            $consumed = $this->fabric->consume($this, (true === $toProcess) ? - 1 : ($toProcess - $processed));//set msg count to -1 for infinite run
+            if ( $consumed === 0 && is_int($toProcess) ) {
+                break;
+            }
+            $processed += $consumed;
         }
     }
 
