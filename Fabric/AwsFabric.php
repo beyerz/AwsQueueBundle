@@ -98,7 +98,7 @@ class AwsFabric extends AbstractFabric
                 'MessageAttributeNames' => [ 'All' ],
                 'QueueUrl'              => $queueUrl,
                 'WaitTimeSeconds'       => 20, // for long polling
-//                'VisibilityTimeout'     => 3600, // for lon running processes
+                'VisibilityTimeout'     => 600, // for long running processes
             ]
         );
         $consumed = 0;
