@@ -30,7 +30,7 @@ class ProducerService
      * Consumers that would listen to the producer
      * @var array
      */
-    private $subscribers;
+    protected $subscribers;
 
     /**
      * ProducerService constructor.
