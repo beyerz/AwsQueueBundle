@@ -113,7 +113,7 @@ class ConsumerService
     /**
      * @param int|bool $toProcess
      */
-    private function runSynchronousConsumer($toProcess): void
+    private function runSynchronousConsumer($toProcess)
     {
         $processed = 0;
         while ($processed<$toProcess || $toProcess === true) {

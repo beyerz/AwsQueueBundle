@@ -20,7 +20,7 @@
     "SNS"
   ],
   "require": {
-    "php": ">=7.1",
+    "php": ">=7.0",
     "aws/aws-sdk-php-symfony": "^2.0.0",
     "symfony/symfony": "2.8.*"
   },
