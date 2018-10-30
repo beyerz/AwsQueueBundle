@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Producer\TestDouble;
+namespace Beyerz\AWSQueueBundle\Tests\Unit\Producer\TestDouble;
 
 use \Beyerz\AWSQueueBundle\Producer\ProducerService;
 

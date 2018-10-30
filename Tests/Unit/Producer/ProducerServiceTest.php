@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Unit\Producer;
+namespace Beyerz\AWSQueueBundle\Tests\Unit\Producer;
 
 use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
 use Beyerz\AWSQueueBundle\Fabric\AbstractFabric;
