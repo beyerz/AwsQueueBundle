@@ -5,7 +5,7 @@ namespace Beyerz\AWSQueueBundle\Tests\Unit\Producer;
 use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
 use Beyerz\AWSQueueBundle\Fabric\AbstractFabric;
 use Doctrine\Common\Collections\ArrayCollection;
-use Tests\Unit\Producer\TestDouble\ProducerServiceTestDouble;
+use Beyerz\AWSQueueBundle\Tests\Unit\Producer\TestDouble\ProducerServiceTestDouble;
 
 class ProducerServiceTest extends \PHPUnit\Framework\TestCase {
 
