@@ -1,15 +1,17 @@
 <?php
 
-namespace Tests\Unit\Producer\TestDouble;
+namespace Beyerz\AWSQueueBundle\Tests\Unit\Producer\TestDouble;
 
-use \Beyerz\AWSQueueBundle\Producer\ProducerService;
+use Beyerz\AWSQueueBundle\Producer\ProducerService;
 
-class ProducerServiceTestDouble extends ProducerService {
+class ProducerServiceTestDouble extends ProducerService
+{
 
     /**
      * @return \Doctrine\Common\Collections\ArrayCollection
      */
-    public function getSubscribers() {
+    public function getSubscribers()
+    {
 
         return $this->subscribers;
     }
