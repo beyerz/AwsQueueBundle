@@ -1,4 +1,4 @@
-# AWS Queue Bundle
+# AWS Queue Bundle [![Build Status](https://travis-ci.org/beyerz/AwsQueueBundle.svg?branch=master)](https://travis-ci.org/beyerz/AwsQueueBundle)
 
 ## About
 AWS Queue Bundle for Symfony2
