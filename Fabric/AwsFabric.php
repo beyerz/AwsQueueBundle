@@ -156,7 +156,7 @@ class AwsFabric extends AbstractFabric
      * @param string $channel
      * @return mixed
      */
-    public function setupNotificationServices(string $channel)
+    private function setupNotificationServices(string $channel)
     {
         //ensure notification topic exists
         $topicArn = $this->buildTopicArn($channel);
@@ -191,7 +191,7 @@ class AwsFabric extends AbstractFabric
      * @param string                            $channel
      * @param ArrayCollection|ConsumerService[] $subscribers
      */
-    public function setupQueueServices(string $channel, ArrayCollection $subscribers)
+    private function setupQueueServices(string $channel, ArrayCollection $subscribers)
     {
         $topicArn = $this->buildTopicArn($channel);
         foreach ($subscribers as $subscriber) {

@@ -54,19 +54,6 @@ abstract class AbstractFabric
     abstract public function setup(string $channel, ArrayCollection $subscribers);
 
     /**
-     * @param string $channel
-     * @return mixed
-     */
-    abstract public function setupNotificationServices(string $channel);
-
-    /**
-     * @param string          $channel
-     * @param ArrayCollection $subscribers
-     * @return mixed
-     */
-    abstract public function setupQueueServices(string $channel, ArrayCollection $subscribers);
-
-    /**
      * @param string          $message
      * @param string          $channel
      * @param ArrayCollection $subscribers

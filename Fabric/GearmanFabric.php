@@ -23,16 +23,6 @@ class GearmanFabric extends AbstractFabric
         // TODO: Implement setup() method.
     }
 
-    public function setupNotificationServices(string $channel)
-    {
-        // TODO: Implement setupNotificationServices() method.
-    }
-
-    public function setupQueueServices(string $channel, ArrayCollection $subscribers)
-    {
-        // TODO: Implement setupQueueServices() method.
-    }
-
     public function publish(string $message, string $channel, ArrayCollection $subscribers)
     {
         // TODO: Implement publish() method.
