@@ -11,6 +11,7 @@ namespace Beyerz\AWSQueueBundle\Consumer;
 
 use Beyerz\AWSQueueBundle\Fabric\AbstractFabric;
 use Beyerz\AWSQueueBundle\Producer\ProducerService;
+use Beyerz\AWSQueueBundle\Interfaces\ConsumerInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
@@ -51,11 +52,14 @@ class ConsumerService
         $this->subscribedChannels = new ArrayCollection();
     }
 
-    public function setConsumer($consumer)
+    public function setConsumer(ConsumerInterface $consumer)
     {
         $this->consumer = $consumer;
     }
 
+    /**
+     * @return ConsumerInterface
+     */
     public function getConsumer()
     {
         return $this->consumer;
@@ -76,7 +80,7 @@ class ConsumerService
         return $this;
     }
 
-    public function consume($toProcess)
+    public function consume($toProcess = true)
     {
         foreach ($this->subscribedChannels as $subscribedChannel) {
             $this->fabric->setup($subscribedChannel->getChannel(), new ArrayCollection([ $this ]));
@@ -103,7 +107,8 @@ class ConsumerService
                     pcntl_waitpid($pid, $status);
                     $this->resetDoctrine();
                 } else {
-                    $this->fabric->consume($subscribedChannel->getChannel(), $this);
+                    $messageCount = (true === $toProcess) ? - 1 : ($toProcess - $processed);
+                    $this->fabric->consume($this, $messageCount);
                     exit(0);
                 }
             }
