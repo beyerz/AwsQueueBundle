@@ -5,6 +5,7 @@ parameters:
   beyerz_aws_queue.producer_service.class: Beyerz\AWSQueueBundle\Producer\ProducerService
   beyerz_aws_queue.fabric.aws.class: Beyerz\AWSQueueBundle\Fabric\AwsFabric
   beyerz_aws_queue.fabric.gearman.class: Beyerz\AWSQueueBundle\Fabric\GearmanFabric
+  beyerz_aws_queue.fabric.local.class: Beyerz\AWSQueueBundle\Fabric\LocalFabric
 
 services:
 
@@ -20,5 +21,7 @@ services:
     calls:
       - [setContainer, ['@service_container']]
 
-#  beyerz_aws_queue.fabric.local:
-#    class: "%beyerz_aws_queue.fabric.gearman.class%"
+  beyerz_aws_queue.fabric.local:
+    class: "%beyerz_aws_queue.fabric.local.class%"
+    calls:
+      - [setContainer, ['@service_container']]

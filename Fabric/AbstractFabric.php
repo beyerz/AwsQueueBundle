@@ -15,6 +15,7 @@ use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 abstract class AbstractFabric
 {
     use ContainerAwareTrait;
+
     protected $queueService;
 
     protected $notificationService;

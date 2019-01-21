@@ -1,0 +1,23 @@
+imports:
+  - { resource: security.yml }
+  - { resource: services.yml }
+
+framework:
+  secret: test
+  test: ~
+  session:
+    storage_id: session.storage.mock_file
+  router:
+    resource: '%kernel.root_dir%/config/routing.yml'
+    strict_requirements: ~
+  validation: { enable_annotations: true }
+
+liip_functional_test:
+  cache_sqlite_db: true
+
+beyerz_aws_queue:
+  region: 'us-east-1'
+  account: 'random_account'
+  channel_prefix: "%kernel.environment%"
+  run_local: true
+  enable_forking: false
