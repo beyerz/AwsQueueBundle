@@ -93,20 +93,20 @@ class AwsFabric extends AbstractFabric
         /** @var Result $sqsMessage */
         $sqsMessage = $this->getQueueService()->receiveMessage(
             [
-                'AttributeNames'        => [ 'SentTimestamp' ],
-                'MaxNumberOfMessages'   => ($messageCount>=10 || $messageCount === - 1) ? 10 : $messageCount,
-                'MessageAttributeNames' => [ 'All' ],
+                'AttributeNames'        => ['SentTimestamp'],
+                'MaxNumberOfMessages'   => ($messageCount >= 10 || $messageCount === -1) ? 10 : $messageCount,
+                'MessageAttributeNames' => ['All'],
                 'QueueUrl'              => $queueUrl,
                 'WaitTimeSeconds'       => 20, // for long polling
                 'VisibilityTimeout'     => 600, // for long running processes
             ]
         );
         $consumed = 0;
-        if ( count($sqsMessage->get('Messages'))>0 ) {
+        if (count($sqsMessage->get('Messages')) > 0) {
             foreach ($sqsMessage->get('Messages') as $message) {
                 $body = json_decode($message['Body'], true);
                 $msg = unserialize($body['Message']);
-                if ( is_array($msg) ) {
+                if (is_array($msg)) {
                     $data = $msg['data'];
                     $channel = $msg['channel'];
 
@@ -120,9 +120,9 @@ class AwsFabric extends AbstractFabric
                     'msg'     => $data,
                     'channel' => $channel,
                 ];
-                $result = call_user_func([ $this->container->get($consumer->getConsumer()), 'consume' ], $consumable);
+                $result = $consumer->getConsumer()->consume($consumable);
 
-                if ( $result ) {
+                if ($result) {
                     //remove message
                     $this->getQueueService()->deleteMessage(
                         [
@@ -131,7 +131,7 @@ class AwsFabric extends AbstractFabric
                         ]
                     );
                 }
-                $consumed ++;
+                $consumed++;
             }
         }
 
@@ -167,7 +167,7 @@ class AwsFabric extends AbstractFabric
                 ]
             );
         } catch (SnsException $e) {
-            if ( $e->getStatusCode() !== 404 ) {
+            if ($e->getStatusCode() !== 404) {
                 throw $e;
             }
             //create topic
@@ -205,7 +205,7 @@ class AwsFabric extends AbstractFabric
                     ]
                 );
             } catch (SqsException $e) {
-                if ( !$e->getStatusCode() == 400 ) {
+                if (!$e->getStatusCode() == 400) {
                     throw $e;
                 }
                 $this->getQueueService()->createQueue(
@@ -219,12 +219,12 @@ class AwsFabric extends AbstractFabric
             }
 
             //subscription exists create if not
-            if ( false === $this->isConsumerSubscribedToProducer($queueUrl, $topicArn) ) {
+            if (false === $this->isConsumerSubscribedToProducer($queueUrl, $topicArn)) {
                 $this->subscribeConsumerToProducer($queueUrl, $topicArn);
             }
 
             //policy exists create if not
-            if ( false === $this->isTopicPermitted($queueUrl, $topicArn, $subscriber->getChannel()) ) {
+            if (false === $this->isTopicPermitted($queueUrl, $topicArn, $subscriber->getChannel())) {
                 $this->addQueuePermission($queueUrl, $topicArn, $subscriber->getChannel());
             }
         }
@@ -249,9 +249,9 @@ class AwsFabric extends AbstractFabric
             ]
         );
 
-        if ( count($subscriptions->get('Subscriptions')>0) ) {
+        if (count($subscriptions->get('Subscriptions') > 0)) {
             foreach ($subscriptions->get('Subscriptions') as $subscription) {
-                if ( $subscription['Protocol'] == 'sqs' && $subscription['Endpoint'] == $this->getQueueService()->getQueueArn($queueUrl) ) {
+                if ($subscription['Protocol'] == 'sqs' && $subscription['Endpoint'] == $this->getQueueService()->getQueueArn($queueUrl)) {
                     return true;
                 }
             }
@@ -265,19 +265,19 @@ class AwsFabric extends AbstractFabric
 
         $permissions = $this->getQueueService()->getQueueAttributes(
             [
-                "AttributeNames" => [ 'Policy' ],
+                "AttributeNames" => ['Policy'],
                 "QueueUrl"       => $queueUrl,
             ]
         );
-        if ( !is_null($permissions->get("Attributes")) ) {
+        if (!is_null($permissions->get("Attributes"))) {
             $policy = json_decode($permissions->get("Attributes")['Policy'], true);
             $expectedPolicy = $this->buildPolicy($queueUrl, $topicArn, $channelName);
             $expectedStatement = $expectedPolicy['Statement'];
             foreach ($policy['Statement'] as $statement) {
-                if ( !is_array($statement['Action']) ) {
-                    $statement['Action'] = [ $statement['Action'] ];
+                if (!is_array($statement['Action'])) {
+                    $statement['Action'] = [$statement['Action']];
                 }
-                if ( $statement == $expectedStatement ) {
+                if ($statement == $expectedStatement) {
                     return true;
                 }
             }
@@ -315,12 +315,12 @@ class AwsFabric extends AbstractFabric
     {
         return [
             "Version"   => "2012-10-17",
-            "Id"        => 'sns.' . $channelName . '.queue',
+            "Id"        => 'sns.'.$channelName.'.queue',
             "Statement" => [
                 "Sid"       => "Allow-SNS-SendMessage",
                 "Effect"    => "Allow",
                 "Principal" => "*",
-                "Action"    => [ "SQS:SendMessage" ],
+                "Action"    => ["SQS:SendMessage"],
                 "Resource"  => $this->getQueueService()->getQueueArn($queueUrl),
                 "Condition" => [
                     "ArnEquals" => [
