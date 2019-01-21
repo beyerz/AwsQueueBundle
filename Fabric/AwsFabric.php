@@ -14,11 +14,9 @@ use Aws\Sns\Exception\SnsException;
 use Aws\Sqs\Exception\SqsException;
 use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
 class AwsFabric extends AbstractFabric
 {
-    use ContainerAwareTrait;
 
     /**
      * AWS Account ID

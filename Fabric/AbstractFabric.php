@@ -10,10 +10,11 @@ namespace Beyerz\AWSQueueBundle\Fabric;
 
 use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
 abstract class AbstractFabric
 {
-
+    use ContainerAwareTrait;
     protected $queueService;
 
     protected $notificationService;
