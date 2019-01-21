@@ -16,13 +16,20 @@
     <php>
         <ini name="memory_limit" value="-1"/>
         <ini name="error_reporting" value="-1"/>
+        <server name="KERNEL_DIR" value="./Tests/Fixtures/app"/>
+        <server name="KERNEL_CLASS" value="Beyerz\AWSQueueBundle\Tests\Fixtures\app\AppKernel"/>
     </php>
+
+    <logging>
+        <log type="coverage-clover" target="clover.xml"/>
+    </logging>
 
     <testsuites>
         <testsuite name="AWS Queue Bundle Test Suite">
             <directory>Tests/Unit</directory>
         </testsuite>
     </testsuites>
+
     <filter>
         <whitelist processUncoveredFilesFromWhitelist="true">
             <directory suffix=".php">./</directory>

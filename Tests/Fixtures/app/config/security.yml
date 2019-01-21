@@ -1,0 +1,15 @@
+# To get started with security, check out the documentation:
+# http://symfony.com/doc/current/security.html
+security:
+
+# http://symfony.com/doc/current/security.html#b-configuring-how-users-are-loaded
+  providers:
+    in_memory: { memory: ~ }
+
+  firewalls:
+    main:
+      anonymous: ~
+
+    dev:
+      pattern: ^/(_(profiler|wdt)|css|images|js)/
+      security: false

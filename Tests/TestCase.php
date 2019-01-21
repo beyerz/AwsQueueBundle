@@ -9,9 +9,10 @@
 namespace Beyerz\AWSQueueBundle\Tests;
 
 
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-abstract class TestCase extends \PHPUnit_Framework_TestCase
+abstract class TestCase extends WebTestCase
 {
 
     /**

@@ -40,7 +40,7 @@ class LocalFabric extends AbstractFabric
         $count = 0;
         foreach($this->messages as $index => $message) {
             if ($message['channel'] == $channel) {
-                $consumer->getConsumer()->consume($message['content']);
+                call_user_func([ $this->container->get($consumer->getConsumer()), 'consume' ], $message['content']);
             }
             $count++;
         }
