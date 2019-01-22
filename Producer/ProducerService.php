@@ -9,9 +9,8 @@
 namespace Beyerz\AWSQueueBundle\Producer;
 
 
-use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
 use Beyerz\AWSQueueBundle\Fabric\AbstractFabric;
-use Doctrine\Common\Collections\ArrayCollection;
+use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
 
 class ProducerService
 {
@@ -24,24 +23,17 @@ class ProducerService
     /**
      * @var string
      */
-    private $channel;
-
-    /**
-     * Consumers that would listen to the producer
-     * @var array
-     */
-    protected $subscribers;
+    private $topic;
 
     /**
      * ProducerService constructor.
-     * @param AbstractFabric $fabric
-     * @param string         $channel
+     * @param FabricInterface $fabric
+     * @param string          $topic
      */
-    public function __construct(AbstractFabric $fabric, string $channel)
+    public function __construct(FabricInterface $fabric, string $topic)
     {
         $this->fabric = $fabric;
-        $this->channel = $channel;
-        $this->subscribers = new ArrayCollection();
+        $this->topic = $topic;
     }
 
     /**
@@ -49,19 +41,12 @@ class ProducerService
      */
     public function publish(string $message)
     {
-        $this->fabric->publish($message, $this->channel, $this->subscribers);
+        $this->fabric->publish($message, $this->topic);
     }
 
-    public function addSubscriber(ConsumerService $consumer)
+    public function getTopic()
     {
-        $this->subscribers->add($consumer);
-
-        return $this;
-    }
-
-    public function getChannel()
-    {
-        return $this->channel;
+        return $this->topic;
     }
 
 }

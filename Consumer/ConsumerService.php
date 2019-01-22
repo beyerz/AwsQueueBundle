@@ -11,7 +11,7 @@ namespace Beyerz\AWSQueueBundle\Consumer;
 
 use Beyerz\AWSQueueBundle\Fabric\AbstractFabric;
 use Beyerz\AWSQueueBundle\Interfaces\ConsumerInterface;
-use Beyerz\AWSQueueBundle\Producer\ProducerService;
+use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
@@ -30,33 +30,37 @@ class ConsumerService
     private $channel;
 
     /**
-     * @var ArrayCollection|ProducerService[]
+     * @var ArrayCollection|string[]
      */
-    private $subscribedChannels;
+    private $topics;
 
     /**
      * Service id of the consumer to load
-     * @var string
+     * @var ConsumerInterface
      */
     private $consumer;
 
     /**
      * ProducerService constructor.
-     * @param AbstractFabric $fabric
-     * @param string         $channel
+     * @param FabricInterface $fabric
+     * @param string          $channel
+     * @param array|null      $topics
      */
-    public function __construct(AbstractFabric $fabric, string $channel)
+    public function __construct(FabricInterface $fabric, string $channel, array $topics)
     {
         $this->fabric = $fabric;
         $this->channel = $channel;
-        $this->subscribedChannels = new ArrayCollection();
+        $this->topics = new ArrayCollection($topics);
+        foreach ($this->topics as $topic) {
+            $this->fabric->setup($this->channel, $topic);
+        }
     }
 
     /**
      * @param ConsumerInterface $consumer
      * @Todo: Figure out a way to avoid circular referencing in services so that we can set ConsumerInterface as argument type
      */
-    public function setConsumer($consumer)
+    public function setConsumer(ConsumerInterface $consumer)
     {
         $this->consumer = $consumer;
     }
@@ -77,18 +81,28 @@ class ConsumerService
         return $this->channel;
     }
 
-    public function addSubscribedChannel(ProducerService $channel)
+    /**
+     * @return ArrayCollection|string[]
+     */
+    public function getTopics(): ArrayCollection
     {
-        $this->subscribedChannels->add($channel);
+        return $this->topics;
+    }
+
+    /**
+     * The topic name of a producer that the consumer would be subscribed to
+     * @param ArrayCollection $topic
+     * @return $this
+     */
+    public function addTopic(ArrayCollection $topic)
+    {
+        $this->topics->add($topic);
 
         return $this;
     }
 
     public function consume($toProcess = true)
     {
-        foreach ($this->subscribedChannels as $subscribedChannel) {
-            $this->fabric->setup($subscribedChannel->getChannel(), new ArrayCollection([$this]));
-        }
         if (true === $this->container->getParameter('beyerz_aws_queue.enable_forking')) {
             $this->runForkedConsumer($toProcess);
         } else {
@@ -98,7 +112,7 @@ class ConsumerService
 
     private function runForkedConsumer($toProcess)
     {
-        foreach ($this->subscribedChannels as $subscribedChannel) {
+        foreach ($this->topics as $subscribedChannel) {
             $processed = 0;
             while ($processed < $toProcess || $toProcess === true) {
                 $processed++;

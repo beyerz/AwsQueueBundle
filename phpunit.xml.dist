@@ -25,8 +25,11 @@
     </logging>
 
     <testsuites>
-        <testsuite name="AWS Queue Bundle Test Suite">
+        <testsuite name="AWS Queue Bundle Unit Test Suite">
             <directory>Tests/Unit</directory>
+        </testsuite>
+        <testsuite name="AWS Queue Bundle Functional Test Suite">
+            <directory>Tests/Functional</directory>
         </testsuite>
     </testsuites>
 

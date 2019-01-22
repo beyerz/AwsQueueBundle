@@ -1,54 +1,65 @@
 <?php
+
 namespace Beyerz\AWSQueueBundle\Fabric;
 
 use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
+use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
-class LocalFabric extends AbstractFabric
+class LocalFabric implements FabricInterface
 {
+    use ContainerAwareTrait;
+
     /**
      * @var ArrayCollection
      */
     public $messages;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->messages = new ArrayCollection();
     }
 
     /**
      * Fabric should ensure that all notification channels and respective queues exist and subscribers are defined
-     * @param string $channel
-     * @param ConsumerService[] $subscribers
+     * @param string            $topic
+     * @param ConsumerService[] $channel
      * @return mixed
      */
-    public function setup(string $channel, ArrayCollection $subscribers)
+    public function setup(string $topic, string $channel)
     {
 
     }
 
-    public function publish(string $message, string $channel, ArrayCollection $subscribers)
+    public function publish(string $message, string $topic)
     {
-        $this->messages->add([
-            'channel' => $channel,
-            'content' => $message
-        ]);
+        $this->messages->add(
+            [
+                'topic'   => $topic,
+                'content' => $message,
+            ]
+        );
     }
 
-    public function consume(ConsumerService $consumer, int $messageCount): int
+    public function consume(ConsumerService $service, int $messageCount): int
     {
-        $channel = $consumer->getChannel();
+        $topics = $service->getTopics();
+        $topics->toArray();
         $count = 0;
-        foreach($this->messages as $index => $message) {
-            if ($message['channel'] == $channel) {
-                call_user_func([ $this->container->get($consumer->getConsumer()), 'consume' ], $message['content']);
+        foreach ($this->messages as $index => $message) {
+            if (in_array($message['topic'], $topics->toArray())) {
+                $service->getConsumer()->consume($message['content']);
             }
             $count++;
         }
-        
-        $this->messages = $this->messages->filter(function($message) use ($channel) {
-            return $message['channel'] != $channel;
-        });
-        
+
+        $this->messages = $this->messages->filter(
+            function ($message) use ($topics) {
+                return !(in_array($message['topic'], $topics->toArray()));
+            }
+        );
+
         return $count;
     }
 }

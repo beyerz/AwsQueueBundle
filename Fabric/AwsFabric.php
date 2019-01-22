@@ -53,19 +53,19 @@ class AwsFabric extends AbstractFabric
     }
 
     /**
-     * @param string          $message
+     * @param string          $topic
      * @param                 $channel
-     * @param ArrayCollection $subscribers
+     * @param string          $subscribers
      * @return string
      */
-    public function publish(string $message, string $channel, ArrayCollection $subscribers): string
+    public function publish(string $message, string $topic): string
     {
-        $this->setup($channel, $subscribers);
-        $topicArn = $this->buildTopicArn($channel);
+//        $this->setup($channel, $subscribers);
+        $topicArn = $this->buildTopicArn($topic);
 
         $msg = [
             'data'    => $message,
-            'channel' => $channel,
+            'channel' => $topic,
         ];
 
         /** @var Result $response */
@@ -80,13 +80,13 @@ class AwsFabric extends AbstractFabric
     }
 
     /**
-     * @param ConsumerService $consumer
+     * @param ConsumerService $service
      * @param int             $messageCount
      * @return int
      */
-    public function consume(ConsumerService $consumer, int $messageCount): int
+    public function consume(ConsumerService $service, int $messageCount): int
     {
-        $queueUrl = $this->buildQueueUrl($consumer->getChannel());
+        $queueUrl = $this->buildQueueUrl($service->getChannel());
         //get message
         /** @var Result $sqsMessage */
         $sqsMessage = $this->getQueueService()->receiveMessage(
@@ -118,7 +118,7 @@ class AwsFabric extends AbstractFabric
                     'msg'     => $data,
                     'channel' => $channel,
                 ];
-                $result = $consumer->getConsumer()->consume($consumable);
+                $result = $service->getConsumer()->consume($consumable);
 
                 if ($result) {
                     //remove message
@@ -138,28 +138,32 @@ class AwsFabric extends AbstractFabric
 
     /**
      * Fabric should ensure that all notification channels and respective queues exist and subscribers are defined
-     * @param string          $channel
-     * @param ArrayCollection $subscribers
+     * @param string $topic
+     * @param string $channel
      * @return mixed
      */
-    public function setup(string $channel, ArrayCollection $subscribers)
+    public function setup(string $topic, string $channel = null)
     {
-        $this->setupNotificationServices($channel);
-        $this->setupQueueServices($channel, $subscribers);
+        //Topics must be created before the channel as the channel must subscribe to an existing topic
+        $topicArn = $this->setupNotificationServices($channel);
+        if (!is_null($channel)) {
+            //Create channel and subscribe to existing topic
+            $this->setupQueueServices($topic, $topicArn);
+        }
 
         return;
     }
 
     /**
-     * @param string $channel
+     * @param string $topic
      * @return mixed
      */
-    private function setupNotificationServices(string $channel)
+    private function setupNotificationServices(string $topic)
     {
         //ensure notification topic exists
-        $topicArn = $this->buildTopicArn($channel);
+        $topicArn = $this->buildTopicArn($topic);
         try {
-            $topicAttributes = $this->getNotificationService()->getTopicAttributes(
+            $this->getNotificationService()->getTopicAttributes(
                 [
                     "TopicArn" => $topicArn,
                 ]
@@ -169,62 +173,57 @@ class AwsFabric extends AbstractFabric
                 throw $e;
             }
             //create topic
-            $topic = $this->getNotificationService()->createTopic(
+            $this->getNotificationService()->createTopic(
                 [
-                    'Name' => $channel,
+                    'Name' => $topic,
                 ]
             );
             //get the attributes
-            $topicAttributes = $this->getNotificationService()->getTopicAttributes(
+            $this->getNotificationService()->getTopicAttributes(
                 [
                     "TopicArn" => $topicArn,
                 ]
             );
         }
 
-        return $topicAttributes;
+        return $topicArn;
     }
 
     /**
-     * @param string                            $channel
-     * @param ArrayCollection|ConsumerService[] $subscribers
+     * @param string $channel
+     * @param string $topicArn
      */
-    private function setupQueueServices(string $channel, ArrayCollection $subscribers)
+    private function setupQueueServices(string $channel, string $topicArn)
     {
-        $topicArn = $this->buildTopicArn($channel);
-        foreach ($subscribers as $subscriber) {
-            $subscription = null;
-            $queueUrl = $this->buildQueueUrl($subscriber->getChannel());
-            //queue exists create if not
-            try {
-                $this->getQueueService()->getQueueAttributes(
-                    [
-                        'QueueUrl' => $queueUrl,
-                    ]
-                );
-            } catch (SqsException $e) {
-                if (!$e->getStatusCode() == 400) {
-                    throw $e;
-                }
-                $this->getQueueService()->createQueue(
-                    [
-                        'QueueName'  => $subscriber->getChannel(),
-                        'Attributes' => [
-                            'ReceiveMessageWaitTimeSeconds' => 20,
-                        ],
-                    ]
-                );
+        $queueUrl = $this->buildQueueUrl($channel);
+        try {
+            $this->getQueueService()->getQueueAttributes(
+                [
+                    'QueueUrl' => $queueUrl,
+                ]
+            );
+        } catch (SqsException $e) {
+            if (!$e->getStatusCode() == 400) {
+                throw $e;
             }
+            $this->getQueueService()->createQueue(
+                [
+                    'QueueName'  => $channel,
+                    'Attributes' => [
+                        'ReceiveMessageWaitTimeSeconds' => 20,
+                    ],
+                ]
+            );
+        }
 
-            //subscription exists create if not
-            if (false === $this->isConsumerSubscribedToProducer($queueUrl, $topicArn)) {
-                $this->subscribeConsumerToProducer($queueUrl, $topicArn);
-            }
+        //subscription exists create if not
+        if (false === $this->isConsumerSubscribedToProducer($queueUrl, $topicArn)) {
+            $this->subscribeConsumerToProducer($queueUrl, $topicArn);
+        }
 
-            //policy exists create if not
-            if (false === $this->isTopicPermitted($queueUrl, $topicArn, $subscriber->getChannel())) {
-                $this->addQueuePermission($queueUrl, $topicArn, $subscriber->getChannel());
-            }
+        //policy exists create if not
+        if (false === $this->isTopicPermitted($queueUrl, $topicArn, $channel)) {
+            $this->addQueuePermission($queueUrl, $topicArn, $channel);
         }
     }
 
