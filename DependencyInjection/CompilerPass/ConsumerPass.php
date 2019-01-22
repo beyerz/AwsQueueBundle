@@ -24,13 +24,14 @@ class ConsumerPass implements CompilerPassInterface
     public function process(ContainerBuilder $container)
     {
 
-        if ( !$container->has('service_container') ) {
+        if (!$container->has('service_container')) {
             return;
         }
         $fabricReference = $container->getParameter('beyerz_aws_queue.is_local') ? 'beyerz_aws_queue.fabric.local' : 'beyerz_aws_queue.fabric.aws';
 
         // find all service IDs with the beyerz_aws_queue.consumer tag
         $consumers = $container->findTaggedServiceIds('beyerz_aws_queue.consumer');
+
         foreach ($consumers as $id => $tags) {
             foreach ($tags as $tag) {
                 $channel = $this->getChannel($id, $tag);
@@ -54,7 +55,7 @@ class ConsumerPass implements CompilerPassInterface
      */
     private function getChannel($id, $tag)
     {
-        if ( isset($tag['channel']) ) {
+        if (isset($tag['channel'])) {
             return $tag['channel'];
         }
 
@@ -63,22 +64,21 @@ class ConsumerPass implements CompilerPassInterface
 
     private function appendChannelPrefix($channel, $prefix = '', $glue = '_')
     {
-        return empty($prefix) ? $channel : $prefix . $glue . $channel;
+        return empty($prefix) ? $channel : $prefix.$glue.$channel;
     }
 
     private function createConsumerServiceDefinition(ContainerBuilder $container, string $fabric, string $channel, string $consumer)
     {
         $consumerDefinition = $container->getDefinition($consumer);
         $consumerSubscriberTags = $consumerDefinition->getTag('beyerz_aws_queue.subscriber');
-        $definition = new Definition(ConsumerService::class, [ new Reference($fabric), $channel ]);
-        $definition->addMethodCall('setConsumer', [ $consumer ]);
+        $topics = [];
+        foreach ($consumerSubscriberTags as $tag) {
+            $topics[] = $tag['producer'];
+        }
+        $definition = new Definition(ConsumerService::class, [new Reference($fabric), $channel, $topics]);
+        $definition->addMethodCall('setConsumer', [$consumerDefinition]);
         $definition->addMethodCall('setContainer', [new Reference('service_container')]);
         $definition->addTag('beyerz_aws_queue.consumer_service');
-        foreach ($consumerSubscriberTags as $consumerSubscriberTag) {
-            $producerReference = new Reference(sprintf('beyerz_aws_queue.producer_service.%s', $consumerSubscriberTag['producer']));
-            $definition->addMethodCall('addSubscribedChannel', [ $producerReference ]);
-            $definition->addTag('beyerz_aws_queue.consumer_service.subscriber', $consumerSubscriberTag);
-        }
 
         return $definition;
     }

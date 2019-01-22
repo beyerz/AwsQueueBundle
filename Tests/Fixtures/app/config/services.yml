@@ -1,6 +1,6 @@
 parameters:
   beyerz_aws_queue.test.producer.local.class: Beyerz\AWSQueueBundle\Tests\Unit\Producer\TestDouble\ProducerServiceTestDouble
-  beyerz_aws_queue.test.consumer.local.class: Beyerz\AWSQueueBundle\Tests\Unit\Consumer\TestDouble\LocalConsumerTestDouble
+  beyerz_aws_queue.test.consumer.local.class: Beyerz\AWSQueueBundle\Tests\Unit\Fabric\Consumer
 services:
 
   beyerz_aws_queue.test.producer.local:

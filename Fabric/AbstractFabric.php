@@ -9,10 +9,10 @@
 namespace Beyerz\AWSQueueBundle\Fabric;
 
 use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
-use Doctrine\Common\Collections\ArrayCollection;
+use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
-abstract class AbstractFabric
+abstract class AbstractFabric implements FabricInterface
 {
     use ContainerAwareTrait;
 
@@ -49,24 +49,24 @@ abstract class AbstractFabric
 
     /**
      * Fabric should ensure that all notification channels and respective queues exist and subscribers are defined
-     * @param string          $channel
-     * @param ArrayCollection $subscribers
+     * @param string $topic
+     * @param string $channel
      * @return mixed
      */
-    abstract public function setup(string $channel, ArrayCollection $subscribers);
+    abstract public function setup(string $topic, string $channel);
 
     /**
-     * @param string          $message
-     * @param string          $channel
-     * @param ArrayCollection $subscribers
+     * @param string $topic
+     * @param string $channel
+     * @param string $subscribers
      * @return mixed
      */
-    abstract public function publish(string $message, string $channel, ArrayCollection $subscribers);
+    abstract public function publish(string $topic, string $channel);
 
     /**
-     * @param ConsumerService $consumer
+     * @param ConsumerService $service
      * @param int             $messageCount
      * @return int
      */
-    abstract public function consume(ConsumerService $consumer, int $messageCount): int;
+    abstract public function consume(ConsumerService $service, int $messageCount): int;
 }

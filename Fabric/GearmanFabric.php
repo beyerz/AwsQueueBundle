@@ -16,19 +16,21 @@ class GearmanFabric extends AbstractFabric
 {
     /**
      * Fabric should ensure that all notification channels and respective queues exist and subscribers are defined
+     * @param string $topic
+     * @param string $channel
      * @return mixed
      */
-    public function setup(string $channel, ArrayCollection $subscribers)
+    public function setup(string $topic, string $channel)
     {
         // TODO: Implement setup() method.
     }
 
-    public function publish(string $message, string $channel, ArrayCollection $subscribers)
+    public function publish(string $topic, string $channel)
     {
         // TODO: Implement publish() method.
     }
 
-    public function consume(ConsumerService $consumer, int $messageCount): int
+    public function consume(ConsumerService $service, int $messageCount): int
     {
         // TODO: Implement consume() method.
     }
