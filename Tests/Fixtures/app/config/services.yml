@@ -1,6 +1,12 @@
 parameters:
   beyerz_aws_queue.test.consumer.local.class: Beyerz\AWSQueueBundle\Tests\Unit\Fabric\Consumer
 services:
+
+  beyerz_aws_queue.test.producer.local:
+    class: "%beyerz_aws_queue.demo.producer.class%"
+    tags:
+      - {name: "beyerz_aws_queue.producer", topic: "test_producer"}
+
   beyerz_aws_queue.test.consumer.local:
     class: "%beyerz_aws_queue.test.consumer.local.class%"
     tags:
