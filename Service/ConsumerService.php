@@ -6,7 +6,7 @@
  * Time: 17:22
  */
 
-namespace Beyerz\AWSQueueBundle\Consumer;
+namespace Beyerz\AWSQueueBundle\Service;
 
 
 use Beyerz\AWSQueueBundle\Fabric\AbstractFabric;
@@ -52,7 +52,7 @@ class ConsumerService
         $this->channel = $channel;
         $this->topics = new ArrayCollection($topics);
         foreach ($this->topics as $topic) {
-            $this->fabric->setup($this->channel, $topic);
+            $queue = $this->fabric->createQueue($this->channel, $topic);
         }
     }
 

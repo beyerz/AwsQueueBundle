@@ -12,7 +12,7 @@ use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
 use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
-abstract class AbstractFabric implements FabricInterface
+abstract class AbstractFabric /*implements FabricInterface*/
 {
     use ContainerAwareTrait;
 

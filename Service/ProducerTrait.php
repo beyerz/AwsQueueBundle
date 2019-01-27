@@ -6,7 +6,7 @@
  * Time: 12:13
  */
 
-namespace Beyerz\AWSQueueBundle\Producer;
+namespace Beyerz\AWSQueueBundle\Service;
 
 trait ProducerTrait
 {

@@ -10,7 +10,7 @@ namespace Beyerz\AWSQueueBundle\Demo;
 
 
 use Beyerz\AWSQueueBundle\Interfaces\ProducerInterface;
-use Beyerz\AWSQueueBundle\Producer\ProducerTrait;
+use Beyerz\AWSQueueBundle\Service\ProducerTrait;
 
 class Producer implements ProducerInterface
 {

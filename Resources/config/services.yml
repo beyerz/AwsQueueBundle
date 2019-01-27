@@ -2,8 +2,8 @@ imports:
   - { resource: demo.yml }
 
 parameters:
-  beyerz_aws_queue.producer_service.class: Beyerz\AWSQueueBundle\Producer\ProducerService
-  beyerz_aws_queue.fabric.aws.class: Beyerz\AWSQueueBundle\Fabric\AwsFabric
+  beyerz_aws_queue.producer_service.class: Beyerz\AWSQueueBundle\Service\ProducerService
+  beyerz_aws_queue.fabric.aws.class: Beyerz\AWSQueueBundle\Fabric\Aws\SnsSqs\Fabric
   beyerz_aws_queue.fabric.gearman.class: Beyerz\AWSQueueBundle\Fabric\GearmanFabric
   beyerz_aws_queue.fabric.local.class: Beyerz\AWSQueueBundle\Fabric\LocalFabric
 
@@ -14,12 +14,10 @@ services:
     arguments: ["@beyerz_aws_queue.fabric.local","default_channel"]
     public: false
 
-  beyerz_aws_queue.fabric.aws:
+  beyerz_aws_queue.fabric.aws.sns_sqs:
     class: "%beyerz_aws_queue.fabric.aws.class%"
-    arguments: ["@aws.sqs","@aws.sns"]
+    arguments: ["%beyerz_aws_queue.aws.region%","%beyerz_aws_queue.aws.account%","@aws.sns","@aws.sqs"]
     public: false
-    calls:
-      - [setContainer, ['@service_container']]
 
   beyerz_aws_queue.fabric.local:
     class: "%beyerz_aws_queue.fabric.local.class%"

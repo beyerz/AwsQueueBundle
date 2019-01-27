@@ -6,10 +6,11 @@
  * Time: 14:40
  */
 
-namespace Beyerz\AWSQueueBundle\Producer;
+namespace Beyerz\AWSQueueBundle\Service;
 
 
 use Beyerz\AWSQueueBundle\Fabric\AbstractFabric;
+use Beyerz\AWSQueueBundle\Fabric\Aws\SnsSqs\Destination;
 use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
 
 class ProducerService
@@ -21,9 +22,9 @@ class ProducerService
     private $fabric;
 
     /**
-     * @var string
+     * @var Destination
      */
-    private $topic;
+    private $destination;
 
     /**
      * ProducerService constructor.
@@ -33,20 +34,15 @@ class ProducerService
     public function __construct(FabricInterface $fabric, string $topic)
     {
         $this->fabric = $fabric;
-        $this->topic = $topic;
+        $this->destination = $fabric->createTopic($topic);
     }
 
     /**
-     * @param mixed $message
+     * @param string $message
+     * @return bool
      */
     public function publish(string $message)
     {
-        $this->fabric->publish($message, $this->topic);
+        return $this->fabric->publish($this->destination, $message);
     }
-
-    public function getTopic()
-    {
-        return $this->topic;
-    }
-
 }

@@ -13,7 +13,6 @@ use Aws\Result;
 use Aws\Sns\Exception\SnsException;
 use Aws\Sqs\Exception\SqsException;
 use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
-use Doctrine\Common\Collections\ArrayCollection;
 
 class AwsFabric extends AbstractFabric
 {
@@ -53,9 +52,8 @@ class AwsFabric extends AbstractFabric
     }
 
     /**
-     * @param string          $topic
-     * @param                 $channel
-     * @param string          $subscribers
+     * @param string $message
+     * @param string $topic
      * @return string
      */
     public function publish(string $message, string $topic): string
@@ -236,7 +234,6 @@ class AwsFabric extends AbstractFabric
     {
         return sprintf("https://sqs.%s.amazonaws.com/%s/%s", $this->region, $this->account, $name);
     }
-
 
     private function isConsumerSubscribedToProducer($queueUrl, $topicArn)
     {

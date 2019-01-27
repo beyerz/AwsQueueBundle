@@ -24,49 +24,54 @@ class ProducerPass implements CompilerPassInterface
     public function process(ContainerBuilder $container)
     {
 
-        if ( !$container->has('service_container') ) {
+        if (!$container->has('service_container')) {
             return;
         }
-        $producerServiceDefinition = $container->getDefinition('beyerz_aws_queue.producer_service');
+        $serviceDefinition = $container->getDefinition('beyerz_aws_queue.producer_service');
         $producers = $container->findTaggedServiceIds('beyerz_aws_queue.producer');
 
         foreach ($producers as $id => $tags) {
             //create a producer service
-            $channel = $this->getProducerChannel($id, $tags);
-            //each producer is defined its own "channel" in the form of a producer service, consumers should be able to define the channel name in their config so as to subscribe
-            $container->setDefinition(
-                "beyerz_aws_queue.producer_service.$channel",
-                $this->createProducerServiceDefinition($producerServiceDefinition, $this->appendChannelPrefix($channel, $container->getParameter('beyerz_aws_queue.channel_prefix')))
-            );
+            $topic = $this->getTopic($id, $tags);
+            $serviceId = "beyerz_aws_queue.producer_service.$topic";
+            $container->setDefinition($serviceId, $this->createDefinition($serviceDefinition, $this->appendPrefix($topic, $container->getParameter('beyerz_aws_queue.prefix'))));
             $producerDefinition = $container->getDefinition($id);
-            $producerDefinition->addMethodCall('setProducerService', [new Reference("beyerz_aws_queue.producer_service.$channel")]);
+            $producerDefinition->addMethodCall('setProducerService', [new Reference($serviceId)]);
         }
     }
 
     /**
      * Get channel name by defined tag or from service id
-     * @param $id
-     * @param $tags
+     * @param        $id
+     * @param        $tags
+     * @param string $prefix
      * @return mixed
      */
-    private function getProducerChannel($id, $tags, $channelPrefix = '')
+    private function getTopic(string $id, array $tags, string $prefix = '')
     {
-        if ( isset($tags[0]['channel']) ) {
+
+        if (isset($tags[0]['channel'])) {
+            @trigger_error('channel as the key for provider tag is deprecated since version v1.0 and will be removed in 2.0. Use topic instead.', E_USER_DEPRECATED);
+
             return $tags[0]['channel'];
+        }
+
+        if (isset($tags[0]['topic'])) {
+            return $tags[0]['topic'];
         }
 
         return str_replace(".", "_", str_replace('beyerz_aws_queue.', '', $id));
     }
 
-    private function appendChannelPrefix($channel, $prefix = '', $glue = '_')
+    private function appendPrefix($channel, $prefix = '', $glue = '_')
     {
-        return empty($prefix) ? $channel : $prefix . $glue . $channel;
+        return empty($prefix) ? $channel : $prefix.$glue.$channel;
     }
 
-    private function createProducerServiceDefinition(Definition $template, string $channel)
+    private function createDefinition(Definition $template, string $topic)
     {
         $definition = new Definition($template->getClass(), $template->getArguments());
-        $definition->replaceArgument(1, $channel);
+        $definition->replaceArgument(1, $topic);
 
         return $definition;
     }

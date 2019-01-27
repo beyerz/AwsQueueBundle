@@ -9,7 +9,7 @@
 namespace Beyerz\AWSQueueBundle\Interfaces;
 
 
-use Beyerz\AWSQueueBundle\Producer\ProducerService;
+use Beyerz\AWSQueueBundle\Service\ProducerService;
 
 interface ProducerInterface
 {

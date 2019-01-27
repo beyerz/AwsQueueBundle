@@ -7,7 +7,7 @@ use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\DependencyInjection\ContainerAwareTrait;
 
-class LocalFabric implements FabricInterface
+class LocalFabric /* implements FabricInterface*/
 {
     use ContainerAwareTrait;
 

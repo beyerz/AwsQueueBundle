@@ -12,13 +12,18 @@ use Symfony\Component\Config\Definition\ConfigurationInterface;
  */
 class Configuration implements ConfigurationInterface
 {
-    const DEFAULT_AWS_REGION='us-east-1';
+    const DEFAULT_AWS_REGION = 'us-east-1';
 
     const KEY_AWS_REGION = 'region';
     const KEY_AWS_ACCOUNT = 'account';
+    /**
+     * @deprecated since v1.0 will be removed in v2.0, use Configuration::KEY_PREFIX instead
+     */
     const KEY_CHANNEL_PREFIX = 'channel_prefix';
+    const KEY_PREFIX = 'prefix';
     const KEY_RUN_LOCAL = 'run_local';
     const KEY_ENABLE_FORKING = 'enable_forking';
+
     /**
      * {@inheritdoc}
      */
@@ -28,23 +33,26 @@ class Configuration implements ConfigurationInterface
         $rootNode = $treeBuilder->root('beyerz_aws_queue');
 
         $rootNode->children()
-            ->scalarNode(self::KEY_AWS_REGION)->defaultValue(self::DEFAULT_AWS_REGION)->end()
-            ->scalarNode(self::KEY_AWS_ACCOUNT)->isRequired()->end()
-            ->scalarNode(self::KEY_CHANNEL_PREFIX)->defaultNull()->end()
+            ->scalarNode(self::KEY_AWS_REGION)->defaultValue(self::DEFAULT_AWS_REGION)->info("Region that you want to use, like us-east-1")->end()
+            ->scalarNode(self::KEY_AWS_ACCOUNT)->isRequired()->info("AWS account number")->end()
+            ->scalarNode(self::KEY_PREFIX)->defaultNull()->info("The value to use as a prefix for all your topics and queues. This is great for separating dev/stage/prod environments using %kernel.environment%")->end()
+            ->scalarNode(self::KEY_CHANNEL_PREFIX)->defaultNull()
+            ->info('"channel_prefix" is deprecated since version v1.0 and will be removed in 2.0. Use "prefix" instead.')
+            ->end()
             ->scalarNode(self::KEY_RUN_LOCAL)->defaultFalse()->end()
             ->scalarNode(self::KEY_ENABLE_FORKING)->defaultTrue()->end()
             ->arrayNode('consumers')
-                ->prototype('array')
-                    ->children()
-                        ->scalarNode('class')->end()
-                        ->scalarNode('producer')->end()
-                    ->end()
-                ->end()
+            ->prototype('array')
+            ->children()
+            ->scalarNode('class')->end()
+            ->scalarNode('producer')->end()
+            ->end()
+            ->end()
             ->end()
             ->arrayNode('producers')
-                ->prototype('scalar')->end()
+            ->prototype('scalar')->end()
             ->end()
-        ->end();
+            ->end();
 
         return $treeBuilder;
     }

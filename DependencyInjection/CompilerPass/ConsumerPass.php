@@ -38,7 +38,7 @@ class ConsumerPass implements CompilerPassInterface
                 $consumerDefinition = $this->createConsumerServiceDefinition(
                     $container,
                     $fabricReference,
-                    $this->appendChannelPrefix($channel, $container->getParameter('beyerz_aws_queue.channel_prefix')),
+                    $this->appendChannelPrefix($channel, $container->getParameter('beyerz_aws_queue.prefix')),
                     $id
                 );
 
