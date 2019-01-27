@@ -97,80 +97,88 @@ class Fabric implements FabricInterface
     /**
      * @param ConsumerService $service
      * @param int             $messageCount
-     * @return int
+     * @return void
      */
-    public function consume(ConsumerService $service, int $messageCount): int
+    public function consume(ConsumerService $service, int $messageCount = -1)
     {
-        $queueUrl = $this->buildQueueUrl($service->getChannel());
-        //get message
-        /** @var Result $sqsMessage */
-        $sqsMessage = $this->getQueueService()->receiveMessage(
+        $consumed = 0;
+        while ($consumed < $messageCount || $messageCount === -1) {
+            $limit = ($messageCount - $consumed > 10 || $messageCount === -1) ? 10 : $messageCount;
+            $messages = $this->getQueuedMessages($service, $limit);
+            if (is_null($messages)) {
+                continue;
+            } else {
+                foreach ($messages as $message) {
+                    $body = json_decode($message['Body'], true);
+                    $msg = unserialize($body['Message']);
+                    $consumable = [
+                        'msg' => $msg['data'],
+                        'topic'   => $msg['topic'],
+                    ];
+                    $result = $service->getConsumer()->consume($consumable);
+
+                    if ($result) {
+                        //remove message
+                        $this->sqs->deleteMessage(
+                            [
+                                'QueueUrl'      => $service->getQueue()->getDsn(),
+                                'ReceiptHandle' => $message['ReceiptHandle'],
+                            ]
+                        );
+                    }
+                    $consumed++;
+                }
+            }
+            sleep(1);
+        }
+    }
+
+    /**
+     * @param ConsumerService $service
+     * @param int             $limit
+     * @return array
+     */
+    private function getQueuedMessages(ConsumerService $service, $limit = 10)
+    {
+        $result = $this->sqs->receiveMessage(
             [
                 'AttributeNames'        => ['SentTimestamp'],
-                'MaxNumberOfMessages'   => ($messageCount >= 10 || $messageCount === -1) ? 10 : $messageCount,
+                'MaxNumberOfMessages'   => ($limit >= 10 || $limit === -1) ? 10 : $limit,
                 'MessageAttributeNames' => ['All'],
-                'QueueUrl'              => $queueUrl,
+                'QueueUrl'              => $service->getQueue()->getDsn(),
                 'WaitTimeSeconds'       => 20, // for long polling
                 'VisibilityTimeout'     => 600, // for long running processes
             ]
         );
-        $consumed = 0;
-        if (count($sqsMessage->get('Messages')) > 0) {
-            foreach ($sqsMessage->get('Messages') as $message) {
-                $body = json_decode($message['Body'], true);
-                $msg = unserialize($body['Message']);
-                if (is_array($msg)) {
-                    $data = $msg['data'];
-                    $channel = $msg['channel'];
 
-                } else {
-                    //BC For older messages that did not contain channel data
-                    $data = $msg;
-                    $channel = null;
-                }
-
-                $consumable = [
-                    'msg'     => $data,
-                    'channel' => $channel,
-                ];
-                $result = $service->getConsumer()->consume($consumable);
-
-                if ($result) {
-                    //remove message
-                    $this->getQueueService()->deleteMessage(
-                        [
-                            'QueueUrl'      => $queueUrl,
-                            'ReceiptHandle' => $message['ReceiptHandle'],
-                        ]
-                    );
-                }
-                $consumed++;
-            }
-        }
-
-        return $consumed;
+        return $result->get('Messages');
     }
 
     /**
-     * @param string $queue
+     * @param string      $queue
+     * @param string|null $topic
      * @return Destination|Queue
      */
-    public function createQueue(string $queue): Destination
+    public function createQueue(string $queue, string $topic = null): Destination
     {
-        $destination = new Queue($queue, $this->region, $this->account);
+        $queue = new Queue($queue, $this->region, $this->account);
+        $topic = $this->createTopic($topic);
         try {
             $this->sqs->getQueueAttributes(
                 [
-                    'QueueUrl' => $destination->getDsn(),
+                    'QueueUrl' => $queue->getDsn(),
                 ]
             );
         } catch (SqsException $e) {
-            if (!$e->getStatusCode() == 400) {
-                throw $e;
+            if ($e->getStatusCode() !== 400 || $e->getAwsErrorCode() !== 'AWS.SimpleQueueService.NonExistentQueue') {
+                dump($e->getAwsErrorCode());
+                die;
+//                throw $e;
             }
+
             $this->sqs->createQueue(
                 [
-                    'QueueName'  => $destination->getName(),
+                    'QueueName'  => $queue->getName(),
                     'Attributes' => [
                         'ReceiveMessageWaitTimeSeconds' => 20,
                     ],
@@ -178,17 +186,150 @@ class Fabric implements FabricInterface
             );
         }
 
+        $this->subscribeToTopic($queue, $topic);
+
+        return $queue;
+    }
+
+    /**
+     * @param Queue $queue
+     * @param Topic $topic
+     *
+     * @return void
+     */
+    private function subscribeToTopic(Queue $queue, Topic $topic)
+    {
         //subscription exists create if not
-        if (false === $this->isConsumerSubscribedToProducer($queueUrl, $topicArn)) {
-            $this->subscribeConsumerToProducer($queueUrl, $topicArn);
+        $isSubscribed = $this->isSubscribedToTopic($queue, $topic);
+        if (false === $isSubscribed) {
+            $this->sns->subscribe(
+                [
+                    'Endpoint' => $this->sqs->getQueueArn($queue->getDsn()),
+                    'Protocol' => 'sqs',
+                    'TopicArn' => $topic->getArn(),
+                ]
+            );
         }
 
-        //policy exists create if not
-        if (false === $this->isTopicPermitted($queueUrl, $topicArn, $channel)) {
-            $this->addQueuePermission($queueUrl, $topicArn, $channel);
+        $this->permitTopic($queue, $topic);
+    }
+
+    /**
+     * @param Queue $queue
+     * @param Topic $topic
+     *
+     * @return bool
+     */
+    private function isSubscribedToTopic(Queue $queue, Topic $topic)
+    {
+        $subscriptions = $this->sns->listSubscriptionsByTopic(
+            [
+                "TopicArn" => $topic->getArn(),
+            ]
+        );
+        if (count($subscriptions->get('Subscriptions')) > 0) {
+            foreach ($subscriptions->get('Subscriptions') as $subscription) {
+                if ($subscription['Protocol'] == 'sqs' && $subscription['Endpoint'] == $this->sqs->getQueueArn($queue->getDsn())) {
+                    return true;
+                }
+            }
         }
 
-        return $destination;
+        return false;
+    }
+
+    /**
+     * @param Queue $queue
+     * @param Topic $topic
+     *
+     * @return void
+     */
+    private function permitTopic(Queue $queue, Topic $topic)
+    {
+        if (false === $this->isTopicPermitted($queue, $topic)) {
+            $policy = $this->generateQueuePolicy($queue, $topic);
+
+            $this->sqs->setQueueAttributes(
+                [
+                    "QueueUrl"   => $queue->getDsn(),
+                    "Attributes" => [
+                        'Policy' => json_encode($policy),
+                    ],
+                ]
+            );
+        }
+    }
+
+    /**
+     * @param Queue $queue
+     * @param Topic $topic
+     * @return array
+     */
+    private function generateQueuePolicy(Queue $queue, Topic $topic)
+    {
+        $permissions = $this->sqs->getQueueAttributes(
+            [
+                "AttributeNames" => ['Policy'],
+                "QueueUrl"       => $queue->getDsn(),
+            ]
+        );
+        $policy = json_decode($permissions->get('Attributes')['Policy'], true);
+        $statements = $policy['Statement'];
+        $append = true;
+        if ($statements !== null) {
+            foreach ($statements as $statement) {
+                $append = ($statement['Condition']['ArnEquals']['aws:SourceArn'] === $topic->getArn()) ? false : $append;
+            }
+        }
+        $statements[] = $this->generatePolicyStatement($queue, $topic);
+
+        return [
+            "Version"   => "2012-10-17",
+            "Id"        => 'sns.'.$queue->getName().'.queue',
+            "Statement" => $statements,
+        ];
+    }
+
+    private function generatePolicyStatement(Queue $queue, Topic $topic)
+    {
+        return [
+            "Sid"       => "Allow-SNS-SendMessage",
+            "Effect"    => "Allow",
+            "Principal" => "*",
+            "Action"    => ["SQS:SendMessage"],
+            "Resource"  => $this->sqs->getQueueArn($queue->getDsn()),
+            "Condition" => [
+                "ArnEquals" => [
+                    "aws:SourceArn" => $topic->getArn(),
+                ],
+            ],
+        ];
+    }
+
+    /**
+     * @param Queue $queue
+     * @param Topic $topic
+     * @return bool
+     */
+    private function isTopicPermitted(Queue $queue, Topic $topic)
+    {
+        $permissions = $this->sqs->getQueueAttributes(
+            [
+                "AttributeNames" => ['Policy'],
+                "QueueUrl"       => $queue->getDsn(),
+            ]
+        );
+
+        $policy = json_decode($permissions->get('Attributes')['Policy'], true);
+        $statements = $policy['Statement'];
+        $permitted = false;
+        if ($statements !== null) {
+            foreach ($statements as $statement) {
+                $permitted = ($statement['Condition']['ArnEquals']['aws:SourceArn'] === $topic->getArn()) ? true : $permitted;
+            }
+        }
+
+        return $permitted;
     }
 
     /**
@@ -225,8 +366,5 @@ class Fabric implements FabricInterface
         return $destination;
     }
 
-    public function subscribeToTopic()
-    {
-    }
 
 }

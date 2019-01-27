@@ -16,8 +16,12 @@ class Producer implements ProducerInterface
 {
     use ProducerTrait;
 
+    /**
+     * @param $message
+     * @return bool
+     */
     public function publish($message)
     {
-        $this->producer->publish($message);
+        return $this->producer->publish($message);
     }
 }

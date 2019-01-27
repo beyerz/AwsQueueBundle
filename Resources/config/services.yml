@@ -11,7 +11,7 @@ services:
 
   beyerz_aws_queue.producer_service:
     class: "%beyerz_aws_queue.producer_service.class%"
-    arguments: ["@beyerz_aws_queue.fabric.local","default_channel"]
+    arguments: ["@beyerz_aws_queue.fabric.local","default_topic"]
     public: false
 
   beyerz_aws_queue.fabric.aws.sns_sqs:

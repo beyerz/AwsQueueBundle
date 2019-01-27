@@ -10,6 +10,7 @@ namespace Beyerz\AWSQueueBundle\Service;
 
 
 use Beyerz\AWSQueueBundle\Fabric\AbstractFabric;
+use Beyerz\AWSQueueBundle\Fabric\Aws\SnsSqs\Queue;
 use Beyerz\AWSQueueBundle\Interfaces\ConsumerInterface;
 use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
 use Doctrine\Common\Collections\ArrayCollection;
@@ -23,6 +24,11 @@ class ConsumerService
      * @var AbstractFabric
      */
     private $fabric;
+
+    /**
+     * @var bool
+     */
+    private $isForked;
 
     /**
      * @var string
@@ -41,24 +47,30 @@ class ConsumerService
     private $consumer;
 
     /**
+     * @var Queue
+     */
+    private $queue;
+
+    /**
      * ProducerService constructor.
      * @param FabricInterface $fabric
+     * @param bool            $isForked
      * @param string          $channel
      * @param array|null      $topics
      */
-    public function __construct(FabricInterface $fabric, string $channel, array $topics)
+    public function __construct(FabricInterface $fabric, bool $isForked, string $channel, array $topics)
     {
         $this->fabric = $fabric;
+        $this->isForked = $isForked;
         $this->channel = $channel;
         $this->topics = new ArrayCollection($topics);
         foreach ($this->topics as $topic) {
-            $queue = $this->fabric->createQueue($this->channel, $topic);
+            $this->queue = $this->fabric->createQueue($this->channel, $topic);
         }
     }
 
     /**
      * @param ConsumerInterface $consumer
-     * @Todo: Figure out a way to avoid circular referencing in services so that we can set ConsumerInterface as argument type
      */
     public function setConsumer(ConsumerInterface $consumer)
     {
@@ -74,11 +86,11 @@ class ConsumerService
     }
 
     /**
-     * @return string
+     * @return Queue
      */
-    public function getChannel()
+    public function getQueue(): Queue
     {
-        return $this->channel;
+        return $this->queue;
     }
 
     /**
@@ -101,20 +113,23 @@ class ConsumerService
         return $this;
     }
 
-    public function consume($toProcess = true)
+    /**
+     * @param int $toProcess
+     */
+    public function consume($toProcess = -1)
     {
-        if (true === $this->container->getParameter('beyerz_aws_queue.enable_forking')) {
+        if (true === $this->isForked) {
             $this->runForkedConsumer($toProcess);
         } else {
             $this->runSynchronousConsumer($toProcess);
         }
     }
 
-    private function runForkedConsumer($toProcess)
+    private function runForkedConsumer($toProcess = -1)
     {
-        foreach ($this->topics as $subscribedChannel) {
+        foreach ($this->topics as $topic) {
             $processed = 0;
-            while ($processed < $toProcess || $toProcess === true) {
+            while ($processed < $toProcess || $toProcess === -1) {
                 $processed++;
 
                 $pid = pcntl_fork();
@@ -125,7 +140,7 @@ class ConsumerService
                     pcntl_waitpid($pid, $status);
                     $this->resetDoctrine();
                 } else {
-                    $messageCount = (true === $toProcess) ? -1 : ($toProcess - $processed);
+                    $messageCount = (-1 === $toProcess) ? -1 : ($toProcess - $processed);
                     $this->fabric->consume($this, $messageCount);
                     exit(0);
                 }
@@ -134,18 +149,12 @@ class ConsumerService
     }
 
     /**
-     * @param int|bool $toProcess
+     * @param int $toProcess
      */
-    private function runSynchronousConsumer($toProcess)
+    private function runSynchronousConsumer($toProcess = -1)
     {
-        $processed = 0;
-        while ($processed < $toProcess || $toProcess === true) {
-            $consumed = $this->fabric->consume($this, (true === $toProcess) ? -1 : ($toProcess - $processed));//set msg count to -1 for infinite run
-            if ($consumed === 0 && is_int($toProcess)) {
-                break;
-            }
-            $processed += $consumed;
-        }
+        //set msg count to -1 for infinite run
+        $this->fabric->consume($this, $toProcess);
     }
 
     private function resetDoctrine()

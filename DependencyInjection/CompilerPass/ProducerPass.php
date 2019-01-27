@@ -63,9 +63,9 @@ class ProducerPass implements CompilerPassInterface
         return str_replace(".", "_", str_replace('beyerz_aws_queue.', '', $id));
     }
 
-    private function appendPrefix($channel, $prefix = '', $glue = '_')
+    private function appendPrefix($topic, $prefix = '', $glue = '_')
     {
-        return empty($prefix) ? $channel : $prefix.$glue.$channel;
+        return empty($prefix) ? $topic : $prefix.$glue.$topic;
     }
 
     private function createDefinition(Definition $template, string $topic)

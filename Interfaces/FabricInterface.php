@@ -25,9 +25,9 @@ interface FabricInterface
     /**
      * @param ConsumerService $service
      * @param int             $messageCount
-     * @return int
+     * @return void
      */
-    public function consume(ConsumerService $service, int $messageCount): int;
+    public function consume(ConsumerService $service, int $messageCount);
 
     /**
      * @param $topic
@@ -36,9 +36,10 @@ interface FabricInterface
     public function createTopic(string $topic): Destination;
 
     /**
-     * @param string $queue
-     * @return mixed
+     * @param string      $queue
+     * @param string|null $topic
+     * @return Destination
      */
-    public function createQueue(string $queue): Destination;
+    public function createQueue(string $queue, string $topic = null): Destination;
 
 }
