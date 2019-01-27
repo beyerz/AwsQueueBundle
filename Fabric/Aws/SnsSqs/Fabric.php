@@ -14,6 +14,7 @@ use Aws\Sns\Exception\SnsException;
 use Aws\Sns\SnsClient;
 use Aws\Sqs\Exception\SqsException;
 use Aws\Sqs\SqsClient;
+use Beyerz\AWSQueueBundle\Interfaces\DestinationInterface;
 use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
 use Beyerz\AWSQueueBundle\Service\ConsumerService;
 
@@ -72,11 +73,11 @@ class Fabric implements FabricInterface
     }
 
     /**
-     * @param Destination|Topic $destination
-     * @param string            $message
+     * @param DestinationInterface|Topic $destination
+     * @param string                     $message
      * @return bool
      */
-    public function publish(Destination $destination, string $message)
+    public function publish(DestinationInterface $destination, string $message)
     {
         $msg = [
             'data'  => $message,
@@ -157,9 +158,9 @@ class Fabric implements FabricInterface
     /**
      * @param string      $queue
      * @param string|null $topic
-     * @return Destination|Queue
+     * @return DestinationInterface|Queue
      */
-    public function createQueue(string $queue, string $topic = null): Destination
+    public function createQueue(string $queue, string $topic = null): DestinationInterface
     {
         $queue = new Queue($queue, $this->region, $this->account);
         $topic = $this->createTopic($topic);
@@ -171,9 +172,7 @@ class Fabric implements FabricInterface
             );
         } catch (SqsException $e) {
             if ($e->getStatusCode() !== 400 || $e->getAwsErrorCode() !== 'AWS.SimpleQueueService.NonExistentQueue') {
-                dump($e->getAwsErrorCode());
-                die;
-//                throw $e;
+                throw $e;
             }
 
             $this->sqs->createQueue(
@@ -336,7 +335,7 @@ class Fabric implements FabricInterface
      * @param string $topic
      * @return Topic
      */
-    public function createTopic(string $topic): Destination
+    public function createTopic(string $topic): DestinationInterface
     {
         $destination = new Topic($topic, $this->region, $this->account);
         try {

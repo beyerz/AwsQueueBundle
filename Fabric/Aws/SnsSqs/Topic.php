@@ -9,7 +9,9 @@
 namespace Beyerz\AWSQueueBundle\Fabric\Aws\SnsSqs;
 
 
-class Topic implements Destination
+use Beyerz\AWSQueueBundle\Interfaces\DestinationInterface;
+
+class Topic implements DestinationInterface
 {
 
     /**

@@ -10,7 +10,7 @@ namespace Beyerz\AWSQueueBundle\Service;
 
 
 use Beyerz\AWSQueueBundle\Fabric\AbstractFabric;
-use Beyerz\AWSQueueBundle\Fabric\Aws\SnsSqs\Destination;
+use Beyerz\AWSQueueBundle\Fabric\Aws\SnsSqs\DestinationInterface;
 use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
 
 class ProducerService
@@ -22,7 +22,7 @@ class ProducerService
     private $fabric;
 
     /**
-     * @var Destination
+     * @var DestinationInterface
      */
     private $destination;
 

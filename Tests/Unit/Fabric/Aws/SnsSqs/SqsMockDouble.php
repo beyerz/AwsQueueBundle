@@ -6,13 +6,14 @@
  * Time: 13:22
  */
 
-namespace Beyerz\AWSQueueBundle\Tests\Unit\Fabric;
+namespace Beyerz\AWSQueueBundle\Tests\Unit\Fabric\Aws\SnsSqs;
 
 
 use Aws\Result;
+use Aws\Sqs\SqsClient;
 use Doctrine\Common\Collections\ArrayCollection;
 
-class ClientMockDouble
+class SqsMockDouble extends SqsClient
 {
 
     /**
@@ -20,22 +21,9 @@ class ClientMockDouble
      */
     public $messages;
 
-    public function __construct()
+    public function __construct(ArrayCollection $collector)
     {
-        $this->messages = new ArrayCollection();
-    }
-
-    public function publish($msg)
-    {
-        $msg = [
-            'Body'          => json_encode($msg),
-            'ReceiptHandle' => rand(1,100),
-
-        ];
-        $this->messages->add($msg);
-        $result = new Result(['MessageId' => 123]);
-
-        return $result;
+        $this->messages = $collector;
     }
 
     public function receiveMessage($options)
@@ -47,11 +35,6 @@ class ClientMockDouble
     }
 
     public function deleteMessage()
-    {
-        return true;
-    }
-
-    public function getTopicAttributes()
     {
         return true;
     }
@@ -84,22 +67,9 @@ class ClientMockDouble
         );
     }
 
-    public function getQueueArn()
+    public function setQueueAttributes(array $args = [])
     {
-        return 'test-arn';
+        return true;
     }
 
-    public function listSubscriptionsByTopic()
-    {
-        return new Result(
-            [
-                'Subscriptions' => [
-                    [
-                        'Protocol' => 'sqs',
-                        'Endpoint' => 'test-arn',
-                    ],
-                ],
-            ]
-        );
-    }
 }

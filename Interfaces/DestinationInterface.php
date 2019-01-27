@@ -6,13 +6,13 @@
  * Time: 16:54
  */
 
-namespace Beyerz\AWSQueueBundle\Fabric\Aws\SnsSqs;
+namespace Beyerz\AWSQueueBundle\Interfaces;
 
 /**
  * Interface Destination
  * @package Beyerz\AWSQueueBundle\Fabric\Aws\SnsSqs
  */
-interface Destination
+interface DestinationInterface
 {
 
 }

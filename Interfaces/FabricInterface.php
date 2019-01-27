@@ -9,18 +9,17 @@
 namespace Beyerz\AWSQueueBundle\Interfaces;
 
 
-use Beyerz\AWSQueueBundle\Fabric\Aws\SnsSqs\Destination;
 use Beyerz\AWSQueueBundle\Service\ConsumerService;
 
 interface FabricInterface
 {
 
     /**
-     * @param Destination $destination
-     * @param string      $message
+     * @param DestinationInterface $destination
+     * @param string               $message
      * @return mixed
      */
-    public function publish(Destination $destination, string $message);
+    public function publish(DestinationInterface $destination, string $message);
 
     /**
      * @param ConsumerService $service
@@ -31,15 +30,15 @@ interface FabricInterface
 
     /**
      * @param $topic
-     * @return Destination
+     * @return DestinationInterface
      */
-    public function createTopic(string $topic): Destination;
+    public function createTopic(string $topic): DestinationInterface;
 
     /**
      * @param string      $queue
      * @param string|null $topic
-     * @return Destination
+     * @return DestinationInterface
      */
-    public function createQueue(string $queue, string $topic = null): Destination;
+    public function createQueue(string $queue, string $topic = null): DestinationInterface;
 
 }

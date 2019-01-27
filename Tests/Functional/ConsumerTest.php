@@ -9,7 +9,7 @@
 namespace Beyerz\AWSQueueBundle\Tests\Functional;
 
 
-use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
+use Beyerz\AWSQueueBundle\Service\ConsumerService;
 use Liip\FunctionalTestBundle\Test\WebTestCase;
 
 class ConsumerTest extends WebTestCase
