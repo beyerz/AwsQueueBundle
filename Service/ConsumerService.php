@@ -9,7 +9,6 @@
 namespace Beyerz\AWSQueueBundle\Service;
 
 
-use Beyerz\AWSQueueBundle\Fabric\AbstractFabric;
 use Beyerz\AWSQueueBundle\Fabric\Aws\SnsSqs\Queue;
 use Beyerz\AWSQueueBundle\Interfaces\ConsumerInterface;
 use Beyerz\AWSQueueBundle\Interfaces\FabricInterface;
@@ -21,7 +20,7 @@ class ConsumerService
     use ContainerAwareTrait;
 
     /**
-     * @var AbstractFabric
+     * @var FabricInterface
      */
     private $fabric;
 
