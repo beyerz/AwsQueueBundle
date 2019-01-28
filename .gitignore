@@ -231,3 +231,5 @@ Network Trash Folder
 Temporary Items
 .apdisk
 /clover.xml
+/Tests/Fixtures/app/cache/
+/Tests/Fixtures/app/logs/

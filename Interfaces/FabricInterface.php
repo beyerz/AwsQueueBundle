@@ -9,30 +9,36 @@
 namespace Beyerz\AWSQueueBundle\Interfaces;
 
 
-use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
+use Beyerz\AWSQueueBundle\Service\ConsumerService;
 
 interface FabricInterface
 {
 
     /**
-     * Fabric should ensure that all notification channels and respective queues exist and subscribers are defined
-     * @param string      $topic
-     * @param string|null $channel
+     * @param DestinationInterface $destination
+     * @param string               $message
      * @return mixed
      */
-    public function setup(string $topic, string $channel);
-
-    /**
-     * @param string $message
-     * @param string $topic
-     * @return mixed
-     */
-    public function publish(string $message, string $topic);
+    public function publish(DestinationInterface $destination, string $message);
 
     /**
      * @param ConsumerService $service
      * @param int             $messageCount
-     * @return int
+     * @return void
      */
-    public function consume(ConsumerService $service, int $messageCount): int;
+    public function consume(ConsumerService $service, int $messageCount);
+
+    /**
+     * @param $topic
+     * @return DestinationInterface
+     */
+    public function createTopic(string $topic): DestinationInterface;
+
+    /**
+     * @param string      $queue
+     * @param string|null $topic
+     * @return DestinationInterface
+     */
+    public function createQueue(string $queue, string $topic = null): DestinationInterface;
+
 }

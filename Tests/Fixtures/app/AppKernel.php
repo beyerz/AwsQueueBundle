@@ -1,7 +1,5 @@
 <?php
 
-namespace Beyerz\AWSQueueBundle\Tests\Fixtures\app;
-
 use Liip\FunctionalTestBundle\LiipFunctionalTestBundle;
 use Symfony\Component\Config\Loader\LoaderInterface;
 use Symfony\Component\Filesystem\Filesystem;

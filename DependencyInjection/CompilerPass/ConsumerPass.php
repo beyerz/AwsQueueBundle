@@ -10,6 +10,7 @@ namespace Beyerz\AWSQueueBundle\DependencyInjection\CompilerPass;
 
 
 use Beyerz\AWSQueueBundle\Consumer\ConsumerService;
+use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\DependencyInjection\Compiler\CompilerPassInterface;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Definition;
@@ -27,22 +28,20 @@ class ConsumerPass implements CompilerPassInterface
         if (!$container->has('service_container')) {
             return;
         }
-        $fabricReference = $container->getParameter('beyerz_aws_queue.is_local') ? 'beyerz_aws_queue.fabric.local' : 'beyerz_aws_queue.fabric.aws';
 
         // find all service IDs with the beyerz_aws_queue.consumer tag
         $consumers = $container->findTaggedServiceIds('beyerz_aws_queue.consumer');
+        $this->createConsumerListDefinition($container, $consumers);
 
         foreach ($consumers as $id => $tags) {
             foreach ($tags as $tag) {
                 $channel = $this->getChannel($id, $tag);
-                $consumerDefinition = $this->createConsumerServiceDefinition(
+                $definition = $this->createDefinition(
                     $container,
-                    $fabricReference,
-                    $this->appendChannelPrefix($channel, $container->getParameter('beyerz_aws_queue.channel_prefix')),
+                    $this->appendPrefix($channel, $container->getParameter('beyerz_aws_queue.prefix')),
                     $id
                 );
-
-                $container->setDefinition("beyerz_aws_queue.consumer_service.$channel", $consumerDefinition);
+                $container->setDefinition("beyerz_aws_queue.consumer_service.$channel", $definition);
             }
         }
     }
@@ -50,10 +49,10 @@ class ConsumerPass implements CompilerPassInterface
     /**
      * Get channel name by defined tag or from service id
      * @param $id
-     * @param $tags
+     * @param $tag
      * @return mixed
      */
-    private function getChannel($id, $tag)
+    private function getChannel(string $id, array $tag)
     {
         if (isset($tag['channel'])) {
             return $tag['channel'];
@@ -62,24 +61,62 @@ class ConsumerPass implements CompilerPassInterface
         return str_replace(".", "_", str_replace('beyerz_aws_queue.', '', $id));
     }
 
-    private function appendChannelPrefix($channel, $prefix = '', $glue = '_')
+    private function appendPrefix($name, $prefix = '', $glue = '_')
     {
-        return empty($prefix) ? $channel : $prefix.$glue.$channel;
+        return empty($prefix) ? $name : $prefix.$glue.$name;
     }
 
-    private function createConsumerServiceDefinition(ContainerBuilder $container, string $fabric, string $channel, string $consumer)
+    private function createDefinition(ContainerBuilder $container, string $channel, string $consumerKey)
     {
-        $consumerDefinition = $container->getDefinition($consumer);
-        $consumerSubscriberTags = $consumerDefinition->getTag('beyerz_aws_queue.subscriber');
-        $topics = [];
-        foreach ($consumerSubscriberTags as $tag) {
-            $topics[] = $tag['producer'];
-        }
-        $definition = new Definition(ConsumerService::class, [new Reference($fabric), $channel, $topics]);
-        $definition->addMethodCall('setConsumer', [$consumerDefinition]);
+        $consumer = $container->getDefinition($consumerKey);
+        $consumerSubscriberTags = $consumer->getTag('beyerz_aws_queue.subscriber');
+        $topics = array_map(
+            function ($tag) use ($container) {
+                return $this->appendPrefix($tag['producer'], $container->getParameter('beyerz_aws_queue.prefix'));
+            },
+            $consumerSubscriberTags
+        );
+
+        return $this->createServiceDefinition($container, $consumer, $channel, $topics);
+    }
+
+    /**
+     * @param ContainerBuilder $container
+     * @param Definition       $consumer
+     * @param string           $channel
+     * @param array            $topics
+     * @return Definition
+     */
+    private function createServiceDefinition(ContainerBuilder $container, Definition $consumer, string $channel, array $topics)
+    {
+        $template = $container->getDefinition('beyerz_aws_queue.consumer_service');
+        $definition = new Definition($template->getClass(), $template->getArguments());
+        $definition->replaceArgument(2, $channel);
+        $definition->replaceArgument(3, $topics);
+        $definition->addMethodCall('setConsumer', [$consumer]);
         $definition->addMethodCall('setContainer', [new Reference('service_container')]);
-        $definition->addTag('beyerz_aws_queue.consumer_service');
 
         return $definition;
+    }
+
+    private function createConsumerListDefinition(ContainerBuilder $container, array $consumers = [])
+    {
+        $items = [];
+        foreach ($consumers as $key => $tag) {
+            $def = $container->getDefinition($key);
+            $pattern = '/(%)([a-zA-Z0-9\._-]*)(%)/';
+            $matches = [];
+            $class = $def->getClass();
+            if (preg_match($pattern, $class, $matches) > 0) {
+                $class = $container->getParameter($matches[2]);
+            }
+            $items[] = [
+                'service' => $key,
+                'class'   => $class,
+                'name'    => $tag[0]['channel'],
+            ];
+        }
+        $consumersList = new Definition(ArrayCollection::class, [$items]);
+        $container->setDefinition('beyerz_aws_queue.consumer.list', $consumersList);
     }
 }

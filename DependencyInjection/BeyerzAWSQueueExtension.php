@@ -2,8 +2,10 @@
 
 namespace Beyerz\AWSQueueBundle\DependencyInjection;
 
+use Beyerz\AWSQueueBundle\Service\ConsumerService;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
+use Symfony\Component\DependencyInjection\Definition;
 use Symfony\Component\DependencyInjection\Loader;
 use Symfony\Component\DependencyInjection\Reference;
 use Symfony\Component\HttpKernel\DependencyInjection\Extension;
@@ -23,29 +25,48 @@ class BeyerzAWSQueueExtension extends Extension
         $configuration = new Configuration();
         $config = $this->processConfiguration($configuration, $configs);
 
-        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__ . '/../Resources/config'));
+        $loader = new Loader\YamlFileLoader($container, new FileLocator(__DIR__.'/../Resources/config'));
         $loader->load('services.yml');
-        $this->prepareProducerService($config, $container);
-        $container->setParameter('beyerz_aws_queue.channel_prefix', $config[Configuration::KEY_CHANNEL_PREFIX]);
+        $this->prepareProducerDefinition($config, $container);
+        $this->prepareConsumerDefinition($config, $container);
+        $this->exposeParameters($config, $container);
+
+    }
+
+    /**
+     * @param                  $config
+     * @param ContainerBuilder $container
+     */
+    private function prepareProducerDefinition($config, ContainerBuilder $container)
+    {
+        $service = $container->getDefinition('beyerz_aws_queue.producer_service');
+        $fabricRef = $config[Configuration::KEY_RUN_LOCAL] ? 'beyerz_aws_queue.fabric.local' : 'beyerz_aws_queue.fabric.aws.sns_sqs';
+        $service->replaceArgument(0, new Reference($fabricRef));
+    }
+
+    /**
+     * @param                  $config
+     * @param ContainerBuilder $container
+     */
+    private function prepareConsumerDefinition($config, ContainerBuilder $container)
+    {
+        $fabric = $config[Configuration::KEY_RUN_LOCAL] ? 'beyerz_aws_queue.fabric.local' : 'beyerz_aws_queue.fabric.aws.sns_sqs';
+        $service = new Definition(ConsumerService::class, [new Reference($fabric), $config[Configuration::KEY_ENABLE_FORKING], 'default_channel', ['default_topic']]);
+        $service->setPublic(false);
+        $container->setDefinition('beyerz_aws_queue.consumer_service', $service);
+    }
+
+    /**
+     * @param                  $config
+     * @param ContainerBuilder $container
+     */
+    private function exposeParameters($config, ContainerBuilder $container)
+    {
+        $prefix = $config[Configuration::KEY_PREFIX]??$config[Configuration::KEY_CHANNEL_PREFIX];
+        $container->setParameter('beyerz_aws_queue.prefix', $prefix);
         $container->setParameter('beyerz_aws_queue.is_local', $config[Configuration::KEY_RUN_LOCAL]);
         $container->setParameter('beyerz_aws_queue.enable_forking', $config[Configuration::KEY_ENABLE_FORKING]);
-    }
-
-    private function prepareAwsFabric($config, ContainerBuilder $container)
-    {
-        $awsFabricDefinition = $container->getDefinition('beyerz_aws_queue.fabric.aws');
-        $awsFabricDefinition->addMethodCall('setAccount', [ $config[Configuration::KEY_AWS_ACCOUNT] ])
-            ->addMethodCall('setRegion', [ $config[Configuration::KEY_AWS_REGION] ])
-            ->setPublic(false);
-    }
-
-    private function prepareProducerService($config, ContainerBuilder $container)
-    {
-        //prepare the Producer service class
-        $producerServiceDefinition = $container->getDefinition('beyerz_aws_queue.producer_service');
-        $fabricReference = $config[Configuration::KEY_RUN_LOCAL] ? 'beyerz_aws_queue.fabric.local' : 'beyerz_aws_queue.fabric.aws';
-        $this->prepareAwsFabric($config, $container);
-
-        $producerServiceDefinition->replaceArgument(0, new Reference($fabricReference));
+        $container->setParameter('beyerz_aws_queue.aws.region', $config[Configuration::KEY_AWS_REGION]);
+        $container->setParameter('beyerz_aws_queue.aws.account', $config[Configuration::KEY_AWS_ACCOUNT]);
     }
 }

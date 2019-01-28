@@ -6,15 +6,8 @@
  * Time: 12:13
  */
 
-namespace Beyerz\AWSQueueBundle\Producer;
+namespace Beyerz\AWSQueueBundle\Service;
 
-use Beyerz\AWSQueueBundle\Service\ProducerService;
-
-/**
- * Trait ProducerTrait
- * @package    Beyerz\AWSQueueBundle\Producer
- * @deprecated since v1.0 and will be removed in v2.0 use Beyerz\AWSQueueBundle\Service\ProducerTrait instead
- */
 trait ProducerTrait
 {
     /**
