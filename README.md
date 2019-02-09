@@ -1,4 +1,7 @@
 # AWS Queue Bundle 
+[![PHP from Packagist](https://img.shields.io/packagist/php-v/beyerz/aws-queue-bundle.svg?style=flat-square&colorB=8892BF)](https://www.php.net/)
+[![Latest Stable Version](https://img.shields.io/packagist/v/beyerz/aws-queue-bundle.svg?colorB=orange&style=flat-square)](https://packagist.org/packages/beyerz/aws-queue-bundle)
+[![Downloads from Packagist](https://img.shields.io/packagist/dt/beyerz/aws-queue-bundle.svg?style=flat-square&colorB=red)](https://packagist.org/packages/beyerz/aws-queue-bundle)
 [![Build Status](https://travis-ci.org/beyerz/AwsQueueBundle.svg?branch=master)](https://travis-ci.org/beyerz/AwsQueueBundle)
 [![codecov](https://codecov.io/gh/beyerz/AwsQueueBundle/branch/master/graph/badge.svg)](https://codecov.io/gh/beyerz/AwsQueueBundle)
 
